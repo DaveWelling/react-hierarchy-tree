@@ -1,0 +1,76 @@
+/* the tree node's style */
+.tree-view {
+    overflow-y: hidden;
+}
+
+/* style for the children nodes container */
+.tree-view_children {
+    margin-left: 16px;
+}
+
+.tree-view-item {
+    cursor: pointer;
+    text-align: left;
+}
+
+.tree-view-text {
+    color: black;
+    margin: .25em;
+}
+
+
+.tree-view_children-collapsed {
+    height: 0;
+}
+
+.tree-view_arrow {
+    min-width: 1.5em;
+    cursor: pointer;
+    margin-right: 6px;
+    display: inline-block;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.tree-view_spacer {
+    min-width: 1.5em;
+    margin-right: 6px;
+    display: inline-block;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.tree-view_spacer:after {
+    font-size: x-large;
+    vertical-align: middle;
+    line-height: .75em;
+    white-space: pre;
+    content: ' ';
+}
+
+.tree-view_arrow:after {
+    font-size: x-large;
+    vertical-align: middle;
+    line-height: .75em;
+    content: '▾';
+}
+
+/* rotate the triangle to close it */
+.tree-view_arrow-collapsed {
+    -webkit-transform: rotate(-90deg);
+    -moz-transform: rotate(-90deg);
+    -ms-transform: rotate(-90deg);
+    transform: rotate(-90deg);
+}
+
+.tree-node-icon {
+    margin: 1px .5em 1px 1px;
+    padding: 1px;
+    border-style: solid;
+    border-width: thin;
+    border-color: black;
+    color: #333;
+}
