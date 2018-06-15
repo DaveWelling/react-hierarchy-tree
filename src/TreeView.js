@@ -1,6 +1,8 @@
 import React from 'react';
 import TreeNode from './TreeNode';
 import { connect } from 'react-redux';
+import {get} from 'lodash';
+import {childrenForParentId} from './orm/selector/EventSelectors';
 
 export class TreeView extends React.Component {
     render() {
@@ -8,10 +10,10 @@ export class TreeView extends React.Component {
         return (<div className="TreeView">
             {childrenData.map((d, index) => {
                 return (<TreeNode
-                    key={d.id}
+                    key={d._id}
                     name={d.title}
                     label={d.title}
-                    value={d.value}
+                    value={d.title}
                     data={d}
                     previousSiblingData={index > 0 ? childrenData[index-1] : undefined}
                 />);
@@ -21,9 +23,8 @@ export class TreeView extends React.Component {
 }
 
 function mapStateToProps(state, ownProps) {
-
-    const childrenData = state.TREE.nodes
-        .filter(node=>!node.parentId)
+    // Get root nodes and sort by sequence property
+    let childrenData = childrenForParentId(state)
         .sort((a,b)=> a.sequence-b.sequence);
     return {
         childrenData

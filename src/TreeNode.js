@@ -1,9 +1,9 @@
 import React from 'react';
-import {object, string, func, bool} from 'prop-types';
+import { object, string, func, bool } from 'prop-types';
 import TreeText from './TreeText';
 import cuid from 'cuid';
 import { connect } from 'react-redux';
-
+import { childrenForParentId } from './orm/selector/EventSelectors';
 import './TreeNode.css';
 
 class TreeNode extends React.Component {
@@ -13,6 +13,7 @@ class TreeNode extends React.Component {
         this.state = {
             collapsed: true
         };
+
         this.handleClick = this.handleClick.bind(this);
         this.handleWheel = this.handleWheel.bind(this);
         this.makeChildOfPreviousSibling = this.makeChildOfPreviousSibling.bind(this);
@@ -24,8 +25,10 @@ class TreeNode extends React.Component {
         this.addChild = this.addChild.bind(this);
         this.childrenTryCollapses = [];
         this.childrenTryExpands = [];
-
+        this.onValueChange = this.onValueChange.bind(this);
+        this.select = this.select.bind(this);
     }
+
 
     nodeClicked(e, node) {
         if (this.props.onClick) {
@@ -33,6 +36,7 @@ class TreeNode extends React.Component {
         }
         this.setState({ collapsed: !this.state.collapsed });
     }
+
     handleClick() {
         this.setState({ collapsed: !this.state.collapsed });
     }
@@ -42,7 +46,7 @@ class TreeNode extends React.Component {
         e.preventDefault();
         if (e.deltaY < 0) {
             this.tryCollapse();
-        } else if(e.deltaY > 0){
+        } else if (e.deltaY > 0) {
             this.tryExpand();
         }
     }
@@ -50,7 +54,7 @@ class TreeNode extends React.Component {
     tryExpand() {
         // To expand, must be collapsed and have something (other than _meta) inside
         if (this.state.collapsed && Object.keys(this.props.childrenData).length > 1) {
-            this.setState({collapsed: false});
+            this.setState({ collapsed: false });
             return true;
         } else {
             return !!this.tryChildExpand();
@@ -61,77 +65,110 @@ class TreeNode extends React.Component {
             return false;
         } else {
             if (!this.tryChildCollapse()) {
-                this.setState({collapsed: true});
+                this.setState({ collapsed: true });
             }
             return true;
         }
     }
 
     tryChildExpand() {
-        for(let i = 0; i < this.childrenTryExpands.length; i++) {
-            if (this.childrenTryExpands[i]()) {
+        for (let i = 0; i < this.childrenTryExpands.length; i++) {
+            if (this.childrenTryExpands[i] && this.childrenTryExpands[i]()) {
                 return true;
             }
         }
         return false;
-
     }
     tryChildCollapse() {
-        for(let i = this.childrenTryCollapses.length-1; i >= 0; i--) {
-            if (this.childrenTryCollapses[i]()) {
+        for (let i = this.childrenTryCollapses.length - 1; i >= 0; i--) {
+            if (this.childrenTryCollapses[i] && this.childrenTryCollapses[i]()) {
                 return true;
             }
         }
         return false;
     }
-    addChild(previousChild, siblingValue) {
-        const {dispatch} = this.props;
+    select(){
+        this.tryExpand();
+
+    }
+    addChild(previousChild, siblingValue, nextSequence, focusOnChild) {
+        const { dispatch } = this.props;
         // increment sequence by half of the last digit of the previous child's sequence
-        const nextSequence = previousChild.sequence % 1 === 0 ?
-            previousChild.sequence + .5 :
-            previousChild.sequence + (previousChild.sequence % 1 / 2);
+        const newSequence = nextSequence
+            ? previousChild.sequence + (nextSequence - previousChild.sequence) / 2
+            : previousChild.sequence + 1;
         const newId = cuid();
         dispatch({
-            type: 'ADD_TREE_NODE',
-            add: {
-                node : {
-                    id: newId,
+            type: 'CREATE_NOVEL_EVENT',
+            create: {
+                newEvent: {
+                    _id: newId,
                     title: siblingValue,
                     value: siblingValue,
                     parentId: previousChild.parentId,
-                    sequence: nextSequence
+                    sequence: newSequence
                 }
             }
         });
         dispatch({
-            type: 'TRANSFER_TREE_CHILDREN',
+            type: 'TRANSFER_NOVEL_EVENT',
             transfer: {
-                currentParentId: previousChild.id,
+                currentParentId: previousChild._id,
                 newParentId: newId
             }
         });
+        if (focusOnChild) {
+            dispatch({
+                type: 'FOCUS_NOVEL_EVENT',
+                focus: {_id: newId}
+            });
+        }
     }
     makeChildOfPreviousSibling() {
-        const {data, previousSiblingData, dispatch} = this.props;
+        const { data, previousSiblingData, dispatch } = this.props;
         if (!previousSiblingData) return; // first sibling cannot be indented further
         dispatch({
-            type: 'UPDATE_TREE_NODE',
+            type: 'UPDATE_NOVEL_EVENT',
             update: {
-                id: data.id,
+                _id: data._id,
                 changes: {
-                    parentId: previousSiblingData.id
+                    parentId: previousSiblingData._id
                 }
             }
         });
     }
-
+    onValueChange(newValue) {
+        const {
+            dispatch,
+            data: { _id }
+        } = this.props;
+        dispatch({
+            type: 'UPDATE_NOVEL_EVENT',
+            update: {
+                _id,
+                changes: {
+                    title: newValue
+                }
+            }
+        });
+    }
     render() {
         let that = this;
-        const {nodeClicked, addChild, makeChildOfPreviousSibling} = this;
-        that.childrenTryCollapses = [];  //remove previous tryCollapse pointers
+        const { nodeClicked, addChild, makeChildOfPreviousSibling, onValueChange } = this;
+        that.childrenTryCollapses = []; //remove previous tryCollapse pointers
         that.childrenTryExpands = [];
-        let {label, useIcons, onClick, addSibling, childrenData, data, value, previousSiblingData} = this.props;
-        const {collapsed} = this.state;
+        let {
+            nextSequence,
+            label,
+            useIcons,
+            onClick,
+            addSibling,
+            childrenData,
+            data,
+            value,
+            previousSiblingData
+        } = this.props;
+        const { collapsed } = this.state;
 
         let arrowClassName = 'tree-view_arrow';
         let containerClassName = 'tree-view_children';
@@ -140,48 +177,51 @@ class TreeNode extends React.Component {
             containerClassName += ' tree-view_children-collapsed';
         }
 
-        const Arrow = (
-            <div
-                className={arrowClassName}
-                onClick={this.handleClick}
-            />
-        );
+        const Arrow = <div className={arrowClassName} onClick={this.handleClick} />;
         let iconClass = getIconClass(data);
-        const getChildCollapseFunctions = function(child){
-            if (child === null) return; // ignore detach of ref
+        const getChildCollapseFunctions = function(connectedChild) {
+            if (connectedChild === null) return; // ignore detach of ref
+            const child = connectedChild.getWrappedInstance();
             that.childrenTryCollapses.push(child.tryCollapse);
             that.childrenTryExpands.push(child.tryExpand);
         };
         return (
-                <div id={data.id} className={'tree-view-item'} onWheel={this.handleWheel}>
-                    {childrenData && !!childrenData.length && Arrow}
-                    {(!childrenData || !childrenData.length) &&
-                        <span className="tree-view_spacer"/>
-                    }
-                    {useIcons && <span className={'tree-node-icon ' + iconClass} />}
-                    <span title={label} className={'tree-view-text'}>
-                        <TreeText value={value}
-                            addSibling={function(siblingValue){addChild(data, siblingValue);}}
-                            makeChildOfPreviousSibling={makeChildOfPreviousSibling}
-                        />
-                    </span>
-                    <div className={containerClassName}>
-                        {!collapsed && childrenData && childrenData.map((child, index) => {
-                                return (
-                                    <TreeNodeConnected key={child.id || child}
-                                                name={child.title}
-                                                label={child.prettyName || child.title}
-                                                value={child.value}
-                                                data={child}
-                                                ref={getChildCollapseFunctions}
-                                                useIcons={useIcons}
-                                                onClick={onClick}
-                                                previousSiblingData={index > 0 ? childrenData[index-1] : undefined}
-                                    />
-                                );
-                            })
-                        }
-                    </div>
+            <div id={'tvi'+data._id} className={'tree-view-item'} onWheel={this.handleWheel}>
+                {childrenData && !!childrenData.length && Arrow}
+                {(!childrenData || !childrenData.length) && <span className="tree-view_spacer" />}
+                {useIcons && <span className={'tree-node-icon ' + iconClass} />}
+                <span title={label} className={'tree-view-text'}>
+                    <TreeText
+                        id={'text'+data._id}
+                        value={value}
+                        addSibling={function(siblingValue, focusOnNewSibling) {
+                            addChild(data, siblingValue, nextSequence, focusOnNewSibling);
+                        }}
+                        makeChildOfPreviousSibling={makeChildOfPreviousSibling}
+                        onValueChange={onValueChange}
+                    />
+                </span>
+                <div className={containerClassName}>
+                    {!collapsed &&
+                        childrenData &&
+                        childrenData.map((child, index) => {
+                            let nextSequence = childrenData[index + 1] ? childrenData[index + 1].sequence : undefined;
+                            return (
+                                <TreeNodeConnected
+                                    key={child._id || child}
+                                    name={child.title}
+                                    label={child.prettyName || child.title}
+                                    value={child.title}
+                                    data={child}
+                                    ref={getChildCollapseFunctions}
+                                    useIcons={useIcons}
+                                    onClick={onClick}
+                                    previousSiblingData={index > 0 ? childrenData[index - 1] : undefined}
+                                    nextSequence={nextSequence}
+                                />
+                            );
+                        })}
+                </div>
             </div>
         );
     }
@@ -197,14 +237,12 @@ TreeNode.propTypes = {
 
 function mapStateToProps(state, ownProps) {
     // Get children of this node and sort by sequence property
-    const childrenData = state.TREE.nodes
-        .filter(node=>node.parentId === ownProps.data.id)
-        .sort((a,b)=> a.sequence-b.sequence);
+    const childrenData = childrenForParentId(state, ownProps.data._id).sort((a, b) => a.sequence - b.sequence);
     return {
         childrenData
     };
 }
-const TreeNodeConnected = connect(mapStateToProps)(TreeNode);
+const TreeNodeConnected = connect(mapStateToProps, null, null, {withRef:true})(TreeNode);
 export default TreeNodeConnected;
 
 function getIconClass() {
