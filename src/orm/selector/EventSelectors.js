@@ -2,10 +2,18 @@ import { orm } from '../index';
 import { createSelector } from 'reselect';
 import { createSelector as ormCreateSelector } from 'redux-orm';
 
+// FOR INFO REGARDING REDUX RESELECT SELECTORS:
+// SEE https://github.com/reduxjs/reselect
+
+// FOR INFO REGARDING SELECTORS FOR REDUX-ORM:
+// SEE https://github.com/tommikaikkonen/redux-orm#redux-integration-1
+// OR https://github.com/tommikaikkonen/redux-orm-primer/blob/migrate_to_0_9/app/selectors.js
+
 // Selects the state managed by Redux-ORM.
 export const ormSelector = state => state.orm;
+const addIdAsInput = (state, _id) => _id
 
-// Redux-ORM selectors work with reselect. To feed input
+// Redux-ORM selectors work with redux reselect selectors. To feed input
 // selectors to a Redux-ORM selector, we use the reselect `createSelector`.
 export const childrenForParentId = createSelector(
     // The first input selector should always be the orm selector.
@@ -14,38 +22,72 @@ export const childrenForParentId = createSelector(
     // that Session instance as an argument instead.
     // So, `orm` is a Session instance.
     ormSelector,
-    (state, parentId)=>parentId,
+    addIdAsInput,
     ormCreateSelector(orm, (session, parentId) => {
-        console.log('Running children selector');
-
-        // We could also do orm.User.withId(userId).todos.map(...)
-        // but this saves a query on the User table.
-        //
-        // `.withRefs` means that the next operation (in this case filter)
-        // will use direct references from the state instead of Model instances.
-        // If you don't need any Model instance methods, you should use withRefs.
-        if (!parentId) return session.Event.filter({parentId:undefined}).orderBy('sequence').toRefArray();
-        return session.Event.filter(e=>e.parentId && e.parentId === parentId).orderBy('sequence').toRefArray();
+        if (!parentId) return session.Event.filter({parent:undefined}).orderBy('sequence').toRefArray();
+        let parent = session.Event.withId(parentId);
+        let children = parent.children;
+        children = children.orderBy(['sequence'])
+        return children.toRefArray();
     })
 );
 
-export const event = createSelector(
-    ormSelector,
-    ormCreateSelector(orm, (session) => {
-        console.log('Running user selector');
-        // .ref returns a reference to the plain
-        // JavaScript object in the store.
-        return session.event.withId(selectedUserId).ref;
-    })
+export const getEventRef = (state, _id)=> state.Event ? state.Event.itemsById[_id] : state.orm.Event.itemsById[_id];
+
+const parentIdSelector = (state, _id) => getEventRef(state, _id).parent;
+
+export const isCollapsed = createSelector(
+    getEventRef,
+    (event)=> event.ui.collapsed
 );
 
-// export const users = createSelector(
-//     ormSelector,
-//     ormCreateSelector(orm, session => {
-//         console.log('Running users selector');
+/**
+ * This is horrible, but I'm leaving it here so I (and other maintainers)
+ * can understand how the ormCreateSelector works (as of redux-orm 0.10.0)
+ *
+ * This code expects getPreviousSibling to be called with 'state' and '_id'
+ * i.e. const previousSib = getPreviousSibling(allOfReduxState, idOfCurrentSib)
+ */
+export const getPreviousSibling = createSelector( // Start with redux 'reselect' selector
+    /// These top three selectors gather the parameters used by the ormCreateSelector
+    ormSelector, // Filter to just the orm state
+    parentIdSelector, // Get the parent for the passed _id
+    addIdAsInput, // Add passed _id into parameters used by ormCreateSelector
+    ormCreateSelector(
+        orm, // Pass in the instance of redux-orm.ORM object with our configuration
+        state=>state, // Set the initial state -- I have no idea why this is necessary - it doesn't seem to be in the docs really.
+        // The next two selectors gather parameters used by the last selector (similar to the first three in the 'reselect' selector above)
+        (ormState, parentId, _id) => {return _id}, // Get the original `_id` from the parameters created above.
+        (ormState, parentId)=>childrenForParentId({orm:ormState}, parentId), // Get all the children (`parentChildren`) for the parentId selected above -- notice that I had to rewrap the state with an 'orm' key because the 'childrenForParentId' selector expect that.
+        (session, _id, parentChildren) => {
+            // parentChildren are sorted by sequence, so just get the child previous
+            // to the child with our original `_id`
+            return parentChildren.reduce((result, pc, i)=>{
+                if (pc._id === _id) return parentChildren[i-1];
+                else return result;
+            }, undefined);
+        }
+    )
+);
 
-//         // `.toRefArray` returns a new Array that includes
-//         // direct references to each User object in the state.
-//         return session.User.all().toRefArray();
-//     })
-// );
+export const getNextSibling = createSelector(
+    ormSelector, // Filter to just the orm state
+    parentIdSelector, // Get the parent for the passed _id
+    addIdAsInput, // Add passed _id into parameters used by ormCreateSelector
+    ormCreateSelector(
+        orm, // Pass in the instance of redux-orm.ORM object with our configuration
+        (session, parentId, _id) =>{
+            let children;
+            if (!parentId) {
+                children = session.Event.filter({parent:undefined}).orderBy('sequence').toRefArray();
+            } else {
+                const parent = session.Event.withId(parentId);
+                children = parent.children.orderBy('sequence').toRefArray();
+            }
+            return children.reduce((result, child, i)=>{
+                if (child._id === _id) return (children[i+1] ? children[i+1] : undefined );
+                return result;
+            })
+        }
+    )
+);

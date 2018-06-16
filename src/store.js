@@ -17,10 +17,10 @@ const TREE = function treeReducer(state= getData(3,3), action){
         case 'TRANSFER_TREE_CHILDREN': {
             const newState = {...state};
             newState.nodes = state.nodes.map(n=>{
-                if (n.parentId === action.transfer.currentParentId){
+                if (n.parent === action.transfer.currentParentId){
                     return {
                         ...n,
-                        parentId: action.transfer.newParentId
+                        parent: action.transfer.newParentId
                     };
                 }
                 return n;
@@ -53,7 +53,7 @@ function getData(depth, depthCount, parent, all=[]) {
             id: cuid(),
             value: 'depth ' + depth + ' | index ' + index,
             title: 'depth ' + depth + ' | index ' + index,
-            parentId: parent ? parent.id : undefined,
+            parent: parent ? parent.id : undefined,
             sequence: index
           };
         all.push(newNode);

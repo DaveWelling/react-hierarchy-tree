@@ -19,7 +19,7 @@ export default function bootstrap(orm) {
             const newNode = {
                 _id: cuid(),
                 title: 'depth ' + depth + ' | index ' + index,
-                parentId: parent ? parent._id : undefined,
+                parent: parent ? parent._id : undefined,
                 sequence: index
               };
             Event.create(newNode);

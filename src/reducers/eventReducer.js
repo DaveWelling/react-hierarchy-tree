@@ -5,4 +5,5 @@ export default function eventReducer(state={selectedId:undefined}, action){
                 selectedId: action.focus._id
             }
     }
+    return state;
 }

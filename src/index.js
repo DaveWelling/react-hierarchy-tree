@@ -11,15 +11,18 @@ import App from './App'
 //import getStore from './store';
 import bootstrap from './orm/bootstrap';
 import orm from './orm';
+import NOVEL_EVENT from './reducers/eventReducer';
+import thunk from 'redux-thunk';
 
 // add other reducers as properties beside 'orm'
 const rootReducer = combineReducers({
-    orm: createReducer(orm)
+    orm: createReducer(orm),
+    NOVEL_EVENT
 });
 
 // We're using `redux-logger`. Open up the console in the demo and you can inspect
 // the internal state maintained by Redux-ORM.
-const createStoreWithMiddleware = applyMiddleware(createLogger(), eventSink.eventSink)(createStore);
+const createStoreWithMiddleware = applyMiddleware(createLogger(), thunk, eventSink.eventSink)(createStore);
 const store = createStoreWithMiddleware(rootReducer, bootstrap(orm));
 
 render(

@@ -2,20 +2,22 @@ import React from 'react';
 import TreeNode from './TreeNode';
 import { connect } from 'react-redux';
 import {get} from 'lodash';
-import {childrenForParentId} from './orm/selector/EventSelectors';
+import {childrenForParentId} from './orm/selector/eventSelectors';
 
 export class TreeView extends React.Component {
     render() {
         let {childrenData} = this.props;
         return (<div className="TreeView">
             {childrenData.map((d, index) => {
+                // Saves a nasty lookup later
+                let nextSequence = childrenData[index + 1] ? childrenData[index + 1].sequence : undefined;
                 return (<TreeNode
                     key={d._id}
                     name={d.title}
                     label={d.title}
                     value={d.title}
                     data={d}
-                    previousSiblingData={index > 0 ? childrenData[index-1] : undefined}
+                    nextSequence={nextSequence}
                 />);
             })}
         </div>);
