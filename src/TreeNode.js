@@ -146,17 +146,19 @@ class TreeNode extends React.Component {
         };
         return (
             <div id={'tvi'+data._id} className={'tree-view-item'} onWheel={this.handleWheel}>
-                {childrenData && !!childrenData.length && Arrow}
-                {(!childrenData || !childrenData.length) && <span className="tree-view_spacer" />}
-                {useIcons && <span className={'tree-node-icon ' + iconClass} />}
-                <span title={label} className={'tree-view-text'}>
-                    <TreeText
-                        _id={data._id}
-                        value={value}
-                        onValueChange={onValueChange}
-                        nextSequence={nextSequence /* Saves a nasty lookup later*/ }
-                    />
-                </span>
+                <div className='tree-view-item-top' >
+                    {childrenData && !!childrenData.length && Arrow}
+                    {(!childrenData || !childrenData.length) && <span className="tree-view_spacer" />}
+                    {useIcons && <span className={'tree-node-icon ' + iconClass} />}
+                    <div title={label} className={'tree-view-text'}>
+                        <TreeText
+                            _id={data._id}
+                            value={value}
+                            onValueChange={onValueChange}
+                            nextSequence={nextSequence /* Saves a nasty lookup later*/ }
+                        />
+                    </div>
+                </div>
                 <div className={containerClassName}>
                     {!collapsed &&
                         childrenData &&

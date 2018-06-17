@@ -1,6 +1,6 @@
 
 import cuid from 'cuid';
-import { getPreviousSibling, getEventRef, childrenForParentId, getNextSibling } from '../orm/selector/eventSelectors';
+import { getPreviousSibling, getEventR, getPreviousSiblingef, childrenForParentId, getNextSibling } from '../orm/selector/eventSelectors';
 
 //************* MOVE ACTIONS OUT OF TREENODE INTO HERE USING GETSTATE FROM THUNK *************************
 export function makeChildOfPreviousSibling(_id, selectionStart, selectionEnd) {
@@ -154,6 +154,62 @@ export function mergeWithPreviousSibling(event) {
             type: 'REMOVE_NOVEL_EVENT',
             remove: {
                 _id: event._id
+            }
+        });
+    }
+}
+
+export function moveToPrevious(event) {
+    return function(dispatch, getState) {
+        let focusId;
+        const state = getState();
+        const previousSibling = getPreviousSibling(state, event._id)
+        if (previousSibling && previousSibling.ui.collapsed === false) { // use ref equality to ensure collapsed property actually exists.
+            const children = childrenForParentId(state, previousSibling._id);
+             if (children && children.length) {
+                 focusId = children[children.length-1]._id;
+             }
+        }
+        focusId = focusId || (previousSibling ? previousSibling._id : event.parent);
+        if (!focusId) return;  // No where else to go.
+
+        dispatch({
+            type: 'FOCUS_NOVEL_EVENT',
+            focus: {
+                _id: focusId,
+                selectionStart: 0,
+                selectionEnd: 0
+            }
+        });
+    }
+}
+
+export function moveToNext(event) {
+    return function(dispatch, getState) {
+        let focusId;
+        const state = getState();
+        if (event.ui.collapsed === false) { // use ref equality to ensure collapsed property actually exists.
+             const children = childrenForParentId(state, event._id);
+             if (children && children[0]) {
+                 focusId = children[0]._id;
+             }
+        }
+        if (focusId === undefined) {
+            let nextSibling = getNextSibling(state, event._id)
+            if (nextSibling) focusId = nextSibling._id;
+            else if (!event.parent) return; //No where else to go;
+            else {
+                nextSibling = getNextSibling(state, event.parent)
+                if (!nextSibling) return; //No where else to go;
+                focusId = nextSibling._id;
+            }
+        }
+        dispatch({
+            type: 'FOCUS_NOVEL_EVENT',
+            focus: {
+                _id: focusId,
+                selectionStart: 0,
+                selectionEnd: 0
             }
         });
     }

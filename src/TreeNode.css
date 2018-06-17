@@ -12,10 +12,14 @@
     cursor: pointer;
     text-align: left;
 }
-
+.tree-view-item-top {
+    display: flex;
+    margin: 0 .25em;
+}
 .tree-view-text {
     color: black;
     margin: .25em;
+    flex-grow: 1;
 }
 
 

@@ -16,35 +16,19 @@ export default function bootstrap(orm) {
     function getData(depth, depthCount, parent) {
         if (depth <= 0) return;
         for (let index = 0; index < depthCount; index++) {
+            const _id = cuid();
             const newNode = {
-                _id: cuid(),
-                title: 'depth ' + depth + ' | index ' + index,
+                _id,
+                title: 'depth ' + depth + ' | index ' + index + ' | ' + _id,
                 parent: parent ? parent._id : undefined,
                 sequence: index
-              };
+            };
             Event.create(newNode);
-            getData(depth-1, depthCount, newNode);
+            getData(depth - 1, depthCount, newNode);
         }
-      }
-
-    // function getData(depth, depthCount, maxDepth) {
-    //     const children = [];
-    //     if (depth > maxDepth) return children;
-    //     for (let index = 0; index <= depthCount; index++) {
-    //         const newNode = {
-    //             id: cuid(),
-    //             value: 'depth ' + depth + ' | index ' + index,
-    //             title: 'depth ' + depth + ' | index ' + index,
-    //             children: getData(depth + 1, depthCount),
-    //             sequence: index
-    //         };
-    //         Event.create(newNode);
-    //         children.push(newNode);
-    //     }
-    //     return children;
-    // }
+    }
 
     return {
         orm: initialState
-    }
+    };
 }

@@ -1,8 +1,7 @@
 import React from 'react';
-import { subscribe } from './eventSink';
 import { connect } from 'react-redux';
 import { getEventRef } from './orm/selector/eventSelectors';
-import { makeChildOfPreviousSibling, addChild, makeSiblingOfParent, mergeWithPreviousSibling } from './actions/eventActions';
+import { makeChildOfPreviousSibling, addChild, makeSiblingOfParent, mergeWithPreviousSibling, moveToPrevious, moveToNext } from './actions/eventActions';
 
 import './treeText.css';
 class TreeText extends React.Component {
@@ -62,6 +61,18 @@ class TreeText extends React.Component {
 
     onKeyDown(e) {
         switch (e.keyCode) {
+            case 38: { // Arrow up
+                let {event, dispatch} = this.props;
+                dispatch(moveToPrevious(event));
+                e.preventDefault();
+                break;
+            }
+            case 40: { // Arrow down
+                let {event, dispatch} = this.props;
+                dispatch(moveToNext(event));
+                e.preventDefault();
+                break;
+            }
             case 8: // Backspace
                 if (e.target.selectionStart === 0) {
                     let {event, dispatch} = this.props;

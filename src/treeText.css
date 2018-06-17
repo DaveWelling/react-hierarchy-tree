@@ -1,8 +1,7 @@
 .tree-text {
     /* margin: .2em 0 .2em 0; */
     border: none;
-    padding: .25em;
-    margin-bottom: .1em;
+    width: 100%;
 }
 /* .tree-text:hover {
     border: thin black solid;

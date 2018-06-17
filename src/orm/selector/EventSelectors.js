@@ -87,7 +87,7 @@ export const getNextSibling = createSelector(
             return children.reduce((result, child, i)=>{
                 if (child._id === _id) return (children[i+1] ? children[i+1] : undefined );
                 return result;
-            })
+            }, undefined)
         }
     )
 );
