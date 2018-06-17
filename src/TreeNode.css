@@ -27,15 +27,29 @@
     height: 0;
 }
 
+.dragHandle {
+    border-radius: 50%;
+}
+.dragHandle:hover {
+    background-color: lightgray;
+}
+
 .tree-view_arrow {
-    min-width: 1.5em;
+    width: 1.5em;
+    height: 1.5em;
     cursor: pointer;
-    margin-right: 6px;
     display: inline-block;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+}
+.tree-view_arrow:after {
+    font-size: x-large;
+    content: '▾';
+    padding: 0 .1em;
+    line-height: 1em;
+
 }
 
 .tree-view_spacer {
@@ -49,18 +63,10 @@
 }
 .tree-view_spacer:after {
     font-size: x-large;
-    vertical-align: middle;
-    line-height: .75em;
     white-space: pre;
     content: ' ';
 }
 
-.tree-view_arrow:after {
-    font-size: x-large;
-    vertical-align: middle;
-    line-height: .75em;
-    content: '▾';
-}
 
 /* rotate the triangle to close it */
 .tree-view_arrow-collapsed {

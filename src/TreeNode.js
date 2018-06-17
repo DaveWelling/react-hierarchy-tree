@@ -4,12 +4,15 @@ import TreeText from './TreeText';
 import { connect } from 'react-redux';
 import { childrenForParentId, isCollapsed } from './orm/selector/eventSelectors';
 import './TreeNode.css';
+
+import Draggabilly from 'draggabilly';
+
 class TreeNode extends React.Component {
     constructor(props) {
         super(props);
 
 
-        this.handleClick = this.handleClick.bind(this);
+        this.handleArrowClick = this.handleArrowClick.bind(this);
         this.handleWheel = this.handleWheel.bind(this);
         this.tryChildCollapse = this.tryChildCollapse.bind(this);
         this.tryCollapse = this.tryCollapse.bind(this);
@@ -21,6 +24,12 @@ class TreeNode extends React.Component {
         this.onValueChange = this.onValueChange.bind(this);
     }
 
+    componentDidMount(){
+        let draggie = new Draggabilly('#tvi'+this.props.data._id, {
+            containment: '.TreeView',
+            handle: '.dragHandle'
+        });
+    }
 
     nodeClicked(e, node) {
         if (this.props.onClick) {
@@ -38,7 +47,7 @@ class TreeNode extends React.Component {
         })
     }
 
-    handleClick() {
+    handleArrowClick() {
         this.toggleCollapse();
     }
 
@@ -129,14 +138,14 @@ class TreeNode extends React.Component {
             collapsed
         } = this.props;
 
-        let arrowClassName = 'tree-view_arrow';
+        let arrowClassName = 'tree-view_arrow dragHandle';
         let containerClassName = 'tree-view_children';
         if (collapsed) {
             arrowClassName += ' tree-view_arrow-collapsed';
             containerClassName += ' tree-view_children-collapsed';
         }
 
-        const Arrow = <div className={arrowClassName} onClick={this.handleClick} />;
+        const Arrow = <div className={arrowClassName} onClick={this.handleArrowClick} />;
         let iconClass = getIconClass(data);
         const getChildCollapseFunctions = function(connectedChild) {
             if (connectedChild === null) return; // ignore detach of ref
@@ -145,10 +154,10 @@ class TreeNode extends React.Component {
             that.childrenTryExpands.push(child.tryExpand);
         };
         return (
-            <div id={'tvi'+data._id} className={'tree-view-item'} onWheel={this.handleWheel}>
+            <div id={'tvi'+data._id} className='tree-view-item draggable' onClick={(e)=>e.stopPropagation} onWheel={this.handleWheel}>
                 <div className='tree-view-item-top' >
                     {childrenData && !!childrenData.length && Arrow}
-                    {(!childrenData || !childrenData.length) && <span className="tree-view_spacer" />}
+                    {(!childrenData || !childrenData.length) && <span className="tree-view_spacer dragHandle" />}
                     {useIcons && <span className={'tree-node-icon ' + iconClass} />}
                     <div title={label} className={'tree-view-text'}>
                         <TreeText
