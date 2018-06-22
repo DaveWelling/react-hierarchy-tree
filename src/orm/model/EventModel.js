@@ -37,6 +37,25 @@ export class Event extends ValidatingModel{
 
         // UI events
         switch (type) {
+            case 'DRAG_NOVEL_EVENT_START': {
+                const event = Event.withId(action.drag.event._id);
+                event.update({
+                    ui: {
+                        collapsed: true,
+                        beforeDrag: action.drag.event.ui.collapsed
+                    }
+                });
+                break;
+            }
+            case 'DRAG_NOVEL_EVENT_END': {
+                const event = Event.withId(action.drag.event._id);
+                event.update({
+                    ui: {
+                        collapsed: action.drag.event.ui.beforeDrag
+                    }
+                });
+                break;
+            }
             case 'toggleCollapse_novel_event': {
                 const event = Event.withId(action.toggleCollapse._id);
                 event.update({ui: {collapsed: !event.ui.collapsed}});

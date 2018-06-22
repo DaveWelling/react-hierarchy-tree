@@ -77,6 +77,36 @@ export function makeSiblingOfParent(event, selectionStart, selectionEnd) {
     }
 }
 
+export function makeNextSiblingOfEvent(targetId, siblingEvent) {
+    return function(dispatch, getState) {
+        const state = getState();
+        // Get new sequence
+        const nextSibling = getNextSibling(state, siblingEvent._id);
+        const sequenceAfterSiblingEvent = nextSibling? nextSibling.sequence : undefined;
+        const newSequence = sequenceAfterSiblingEvent
+            ? siblingEvent.sequence + (sequenceAfterSiblingEvent - siblingEvent.sequence) / 2
+            : siblingEvent.sequence + 1;
+        dispatch({
+            type: 'UPDATE_NOVEL_EVENT',
+            update: {
+                _id: targetId,
+                changes: {
+                    parent: siblingEvent.parent,
+                    sequence: newSequence
+                }
+            }
+        });
+        dispatch({
+            type: 'FOCUS_NOVEL_EVENT',
+            focus: {
+                _id: targetId,
+                selectionStart: 0,
+                selectionEnd: 0
+            }
+        });
+    }
+}
+
 export function addChild(previousChild, newChildValue, sequenceAfterPreviousChild) {
     return function(dispatch) {
         // increment sequence by half of the last digit of the previous child's sequence

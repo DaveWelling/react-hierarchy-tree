@@ -4,6 +4,11 @@ export default function eventReducer(state={selectedId:undefined}, action){
             return {
                 selectedId: action.focus._id
             }
+            break;
+        case 'DRAG_NOVEL_EVENT_START':
+            return {...state, dragging: action.drag.event};
+        case 'DRAG_NOVEL_EVENT_END':
+            return {...state, dragging: undefined};
     }
     return state;
 }

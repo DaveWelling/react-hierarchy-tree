@@ -4,13 +4,13 @@ import TreeText from './TreeText';
 import { connect } from 'react-redux';
 import { childrenForParentId, isCollapsed } from './orm/selector/eventSelectors';
 import './TreeNode.css';
-
-import Draggabilly from 'draggabilly';
+import interact from 'interactjs';
+import { get } from 'lodash';
+import {makeNextSiblingOfEvent} from './actions/eventActions';
 
 class TreeNode extends React.Component {
     constructor(props) {
         super(props);
-
 
         this.handleArrowClick = this.handleArrowClick.bind(this);
         this.handleWheel = this.handleWheel.bind(this);
@@ -24,11 +24,120 @@ class TreeNode extends React.Component {
         this.onValueChange = this.onValueChange.bind(this);
     }
 
-    componentDidMount(){
-        let draggie = new Draggabilly('#tvi'+this.props.data._id, {
-            containment: '.TreeView',
-            handle: '.dragHandle'
+    componentDidMount() {
+        let that = this; // need to get fresh props;
+        let { dispatch } = this.props;
+        // target elements with the "draggable" class
+        interact('#drag_' + this.props.data._id).draggable({
+            dragDataId: this.props.data._id,
+            manualStart: true,
+            allowFrom: '.drag-handle',
+            // enable inertial throwing
+            inertia: true,
+            // keep the element within the area of it's parent
+            restrict: {
+                restriction: document.querySelector('.TreeView'),
+                endOnly: true,
+                elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
+            },
+            // enable autoScroll
+            autoScroll: true,
+
+            // call this function on every dragmove event
+            onmove: this.dragMoveListener,
+            // call this function on every dragend event
+            onend: function(e) {
+                dispatch({
+                    type: 'DRAG_NOVEL_EVENT_END',
+                    drag: {
+                        event: that.props.data
+                    }
+                });
+            },
+            onstart: function(e) {
+                dispatch({
+                    type: 'DRAG_NOVEL_EVENT_START',
+                    drag: {
+                        event: that.props.data
+                    }
+                });
+            }
+        })
+        .on('move', function (e) {
+          var interaction = e.interaction;
+
+          // if the pointer was moved while being held down
+          // and an interaction hasn't started yet
+          if (interaction.pointerIsDown && !interaction.interacting()) {
+            let original = e.currentTarget;
+            if (!e.srcElement.classList.contains('tree-node-grab')) return;
+                // create a clone of the currentTarget element
+            let clone = e.currentTarget.cloneNode(true);
+            clone.id = 'imAClone';
+            clone.classList.add('treeNodeClone');
+            // insert the clone to the page
+            document.body.appendChild(clone);
+            clone.style.position = 'fixed';
+            clone.style.left = (e.x - e.offsetX)+'px';
+            clone.style.top = (e.y - e.offsetY)+'px';
+            //console.log('start position: ', clone.id, ' x: ', clone.style.left, ' y: ', clone.style.top);
+
+            // start a drag interaction targeting the clone
+            interaction.start({ name: 'drag' },
+                              e.interactable,
+                              clone);
+            e.interactable.on('dragend', ()=>clone.remove());
+          }
         });
+
+        interact('#dropZone_' + that.props.data._id).dropzone({
+            // only accept elements matching this CSS selector
+            accept: '.draggable',
+            // Require a 75% element overlap for a drop to be possible
+            overlap: 0.005,
+
+            // listen for drop related events:
+
+            // ondropactivate: function (event) {
+            //   // add active dropzone feedback
+            //   event.target.classList.add('drop-active');
+            // },
+            ondragenter: function (e) {
+              // feedback the possibility of a drop
+              var dropzoneElement = e.target;
+              dropzoneElement.classList.add('can-drop');
+
+            },
+            ondragleave: function (e) {
+              // remove the drop feedback style
+              var dropzoneElement = e.target;
+              dropzoneElement.classList.remove('can-drop');
+            },
+            ondrop: function (e) {
+                var dropzoneElement = e.target;
+                dropzoneElement.classList.remove('can-drop');
+                console.log('dropped: ', e.draggable.target);
+                let draggedEventId = e.draggable.target.split('_')[1];
+                dispatch(makeNextSiblingOfEvent(draggedEventId, that.props.data));
+            }
+            // ondropdeactivate: function (event) {
+            //   // remove active dropzone feedback
+            //   event.target.classList.remove('drop-active');
+            //   event.target.classList.remove('drop-target');
+            // }
+          });
+    }
+    dragMoveListener(e) {
+        var target = e.target,
+            // keep the dragged position in the data-x/data-y attributes
+            x = (parseFloat(target.getAttribute('data-x')) || 0) + e.dx,
+            y = (parseFloat(target.getAttribute('data-y')) || 0) + e.dy;
+        // translate the element
+        //console.log('id: ', e.target.id, ' x: ', x, ' y: ', y);
+        target.style.webkitTransform = target.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+        // update the posiion attributes
+        target.setAttribute('data-x', x);
+        target.setAttribute('data-y', y);
     }
 
     nodeClicked(e, node) {
@@ -44,7 +153,7 @@ class TreeNode extends React.Component {
             toggleCollapse: {
                 _id: this.props.data._id
             }
-        })
+        });
     }
 
     handleArrowClick() {
@@ -69,7 +178,7 @@ class TreeNode extends React.Component {
                 expand: {
                     _id: this.props.data._id
                 }
-            })
+            });
             return true;
         } else {
             return !!this.tryChildExpand();
@@ -85,7 +194,7 @@ class TreeNode extends React.Component {
                     collapse: {
                         _id: this.props.data._id
                     }
-                })
+                });
             }
             return true;
         }
@@ -127,18 +236,9 @@ class TreeNode extends React.Component {
         const { nodeClicked, onValueChange } = this;
         that.childrenTryCollapses = []; //remove previous tryCollapse pointers
         that.childrenTryExpands = [];
-        let {
-            nextSequence,
-            label,
-            useIcons,
-            onClick,
-            childrenData,
-            data,
-            value,
-            collapsed
-        } = this.props;
-
-        let arrowClassName = 'tree-view_arrow dragHandle';
+        let { nextSequence, label, useIcons, onClick, childrenData, data, value, collapsed, dragging } = this.props;
+        const dropZoneClass = dragging && dragging._id !== data._id ? 'drop-zone-dragging' : 'drop-zone';
+        let arrowClassName = 'tree-view_arrow';
         let containerClassName = 'tree-view_children';
         if (collapsed) {
             arrowClassName += ' tree-view_arrow-collapsed';
@@ -154,17 +254,26 @@ class TreeNode extends React.Component {
             that.childrenTryExpands.push(child.tryExpand);
         };
         return (
-            <div id={'tvi'+data._id} className='tree-view-item draggable' onClick={(e)=>e.stopPropagation} onWheel={this.handleWheel}>
-                <div className='tree-view-item-top' >
+            <div
+                id={'tvi' + data._id}
+                className="tree-view-item"
+                onClick={e => e.stopPropagation}
+                onWheel={this.handleWheel}
+            >
+                <div id={'drag_' + data._id} className="tree-view-item-top draggable">
                     {childrenData && !!childrenData.length && Arrow}
-                    {(!childrenData || !childrenData.length) && <span className="tree-view_spacer dragHandle" />}
+                    {(!childrenData || !childrenData.length) && <span className="tree-view_spacer" />}
                     {useIcons && <span className={'tree-node-icon ' + iconClass} />}
+                    <div className="drag-handle">
+                        <i className="material-icons tree-node-grab">drag_indicator</i>
+                        {/* { dragging && <span>{event.title}</span>} */}
+                    </div>
                     <div title={label} className={'tree-view-text'}>
                         <TreeText
                             _id={data._id}
                             value={value}
                             onValueChange={onValueChange}
-                            nextSequence={nextSequence /* Saves a nasty lookup later*/ }
+                            nextSequence={nextSequence /* Saves a nasty lookup later*/}
                         />
                     </div>
                 </div>
@@ -189,6 +298,7 @@ class TreeNode extends React.Component {
                             );
                         })}
                 </div>
+                <div id={'dropZone_' + data._id} className={dropZoneClass} />
             </div>
         );
     }
@@ -206,12 +316,19 @@ function mapStateToProps(state, ownProps) {
     // Get children of this node and sort by sequence property
     const childrenData = childrenForParentId(state, ownProps.data._id).sort((a, b) => a.sequence - b.sequence);
     const collapsed = isCollapsed(state, ownProps.data._id);
+    const dragging = get(state, 'NOVEL_EVENT.dragging', false);
     return {
         childrenData,
-        collapsed
+        collapsed,
+        dragging
     };
 }
-const TreeNodeConnected = connect(mapStateToProps, null, null, {withRef:true})(TreeNode);
+const TreeNodeConnected = connect(
+    mapStateToProps,
+    null,
+    null,
+    { withRef: true }
+)(TreeNode);
 export default TreeNodeConnected;
 
 function getIconClass() {

@@ -18,7 +18,7 @@
 }
 .tree-view-text {
     color: black;
-    margin: .25em;
+    margin: .25em .25em .25em 0;
     flex-grow: 1;
 }
 
@@ -27,12 +27,6 @@
     height: 0;
 }
 
-.dragHandle {
-    border-radius: 50%;
-}
-.dragHandle:hover {
-    background-color: lightgray;
-}
 
 .tree-view_arrow {
     width: 1.5em;
@@ -75,6 +69,28 @@
     -ms-transform: rotate(-90deg);
     transform: rotate(-90deg);
 }
+.tree-node-grab {
+    font-size: 18px;
+    margin: .25em 0 ;
+    cursor:grab;
+    opacity: 0;
+}
+
+.drop-zone {
+    height: 0;
+}
+.drop-zone-dragging {
+    height: .5em;
+    background-color: lightgray;
+    border: thin black dashed;
+    margin: 0 1em 0 3em;
+}
+.drag-handle {
+}
+.tree-node-grab:hover {
+    background-color: lightgray;
+    opacity: 1;
+}
 
 .tree-node-icon {
     margin: 1px .5em 1px 1px;
@@ -83,4 +99,13 @@
     border-width: thin;
     border-color: black;
     color: #333;
+}
+
+.treeNodeClone {
+    background-color: white;
+    border: dashed black;
+}
+.can-drop {
+    background: lightblue;
+    height: 1.5em;
 }
