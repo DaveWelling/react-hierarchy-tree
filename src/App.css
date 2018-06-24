@@ -2,8 +2,63 @@
   height: 100%;
   width: 100%;
   min-height: 400px;
-  text-align: center;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: stretch;
+  color: white;
+  background-color:black;
+}
+
+.fullWidth {
+  width: 100%
+}
+
+.fullHeight {
+  height: 100%;
+}
+
+select {
+  border-radius: 2px;
+  color: lightslategray;
+  background: black;
+  border-color: lightslategray;
+}
+
+form {
+  padding: 1em;
+}
+form input {
+  border-radius: 2px;
+  color: white;
+  background-color: #05171a;
+  margin: .5em 0 .5em 0;
+  border: #05171a;
+  padding: .5em;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  -webkit-margin: 0;
+}
+
+.leftSplit {
+  overflow-y: auto;
+}
+
+.gutter {
+  background-color: darkslategray;
+
+  background-repeat: no-repeat;
+  background-position: 50%;
+}
+
+.gutter.gutter-vertical {
+  background-image:  url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=');
+  cursor: ns-resize;
+}
+
+.gutter.gutter-horizontal {
+  background-image:  url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
+  cursor: ew-resize;
 }

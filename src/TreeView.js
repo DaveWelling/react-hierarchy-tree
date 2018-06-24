@@ -1,8 +1,9 @@
 import React from 'react';
 import TreeNode from './TreeNode';
 import { connect } from 'react-redux';
-import {get} from 'lodash';
-import {childrenForParentId} from './orm/selector/eventSelectors';
+import {childrenForParentId} from './orm/selector/modelSelectors';
+import './treeView.css';
+
 export class TreeView extends React.Component {
     render() {
         let {childrenData} = this.props;

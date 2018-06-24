@@ -11,13 +11,13 @@ import App from './App'
 //import getStore from './store';
 import bootstrap from './orm/bootstrap';
 import orm from './orm';
-import NOVEL_EVENT from './reducers/eventReducer';
+import NOVEL_MODEL from './reducers/modelReducer';
 import thunk from 'redux-thunk';
 
 // add other reducers as properties beside 'orm'
 const rootReducer = combineReducers({
     orm: createReducer(orm),
-    NOVEL_EVENT
+    NOVEL_MODEL
 });
 
 // We're using `redux-logger`. Open up the console in the demo and you can inspect

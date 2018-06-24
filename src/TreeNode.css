@@ -17,9 +17,10 @@
     margin: 0 .25em;
 }
 .tree-view-text {
-    color: black;
     margin: .25em .25em .25em 0;
     flex-grow: 1;
+    display:flex;
+    flex-direction: row;
 }
 
 
@@ -88,7 +89,7 @@
 .drag-handle {
 }
 .tree-node-grab:hover {
-    background-color: lightgray;
+    background-color: darkslategray;
     opacity: 1;
 }
 
@@ -102,8 +103,8 @@
 }
 
 .treeNodeClone {
-    background-color: white;
-    border: dashed black;
+    background-color: black;
+    border: dashed white;
 }
 .can-drop {
     background: lightblue;

@@ -2,11 +2,11 @@ import React from 'react';
 import { object, string, func, bool } from 'prop-types';
 import TreeText from './TreeText';
 import { connect } from 'react-redux';
-import { childrenForParentId, isCollapsed } from './orm/selector/eventSelectors';
+import { childrenForParentId, isCollapsed } from './orm/selector/modelSelectors';
 import './TreeNode.css';
 import interact from 'interactjs';
 import { get } from 'lodash';
-import {makeNextSiblingOfEvent} from './actions/eventActions';
+import {makeNextSiblingOfModel} from './actions/modelActions';
 
 class TreeNode extends React.Component {
     constructor(props) {
@@ -22,6 +22,7 @@ class TreeNode extends React.Component {
         this.childrenTryCollapses = [];
         this.childrenTryExpands = [];
         this.onValueChange = this.onValueChange.bind(this);
+        this.onTypeChange = this.onTypeChange.bind(this);
     }
 
     componentDidMount() {
@@ -48,17 +49,17 @@ class TreeNode extends React.Component {
             // call this function on every dragend event
             onend: function(e) {
                 dispatch({
-                    type: 'DRAG_NOVEL_EVENT_END',
+                    type: 'DRAG_NOVEL_MODEL_END',
                     drag: {
-                        event: that.props.data
+                        model: that.props.data
                     }
                 });
             },
             onstart: function(e) {
                 dispatch({
-                    type: 'DRAG_NOVEL_EVENT_START',
+                    type: 'DRAG_NOVEL_MODEL_START',
                     drag: {
-                        event: that.props.data
+                        model: that.props.data
                     }
                 });
             }
@@ -117,8 +118,8 @@ class TreeNode extends React.Component {
                 var dropzoneElement = e.target;
                 dropzoneElement.classList.remove('can-drop');
                 console.log('dropped: ', e.draggable.target);
-                let draggedEventId = e.draggable.target.split('_')[1];
-                dispatch(makeNextSiblingOfEvent(draggedEventId, that.props.data));
+                let draggedModelId = e.draggable.target.split('_')[1];
+                dispatch(makeNextSiblingOfModel(draggedModelId, that.props.data));
             }
             // ondropdeactivate: function (event) {
             //   // remove active dropzone feedback
@@ -149,7 +150,7 @@ class TreeNode extends React.Component {
 
     toggleCollapse() {
         this.props.dispatch({
-            type: 'toggleCollapse_novel_event',
+            type: 'toggleCollapse_novel_model',
             toggleCollapse: {
                 _id: this.props.data._id
             }
@@ -174,7 +175,7 @@ class TreeNode extends React.Component {
         // To expand, must be collapsed and have something (other than _meta) inside
         if (this.props.collapsed && Object.keys(this.props.childrenData).length > 1) {
             this.props.dispatch({
-                type: 'expand_novel_event',
+                type: 'expand_novel_model',
                 expand: {
                     _id: this.props.data._id
                 }
@@ -190,7 +191,7 @@ class TreeNode extends React.Component {
         } else {
             if (!this.tryChildCollapse()) {
                 this.props.dispatch({
-                    type: 'collapse_novel_event',
+                    type: 'collapse_novel_model',
                     collapse: {
                         _id: this.props.data._id
                     }
@@ -216,13 +217,29 @@ class TreeNode extends React.Component {
         }
         return false;
     }
+    onTypeChange(newType) {
+        const {
+            dispatch,
+            data: { _id }
+        } = this.props;
+        dispatch({
+            type: 'UPDATE_NOVEL_MODEL',
+            update: {
+                _id,
+                changes: {
+                    type: newType.target.value
+                }
+            }
+        });
+
+    }
     onValueChange(newValue) {
         const {
             dispatch,
             data: { _id }
         } = this.props;
         dispatch({
-            type: 'UPDATE_NOVEL_EVENT',
+            type: 'UPDATE_NOVEL_MODEL',
             update: {
                 _id,
                 changes: {
@@ -233,7 +250,7 @@ class TreeNode extends React.Component {
     }
     render() {
         let that = this;
-        const { nodeClicked, onValueChange } = this;
+        const { nodeClicked, onValueChange, onTypeChange } = this;
         that.childrenTryCollapses = []; //remove previous tryCollapse pointers
         that.childrenTryExpands = [];
         let { nextSequence, label, useIcons, onClick, childrenData, data, value, collapsed, dragging } = this.props;
@@ -266,15 +283,18 @@ class TreeNode extends React.Component {
                     {useIcons && <span className={'tree-node-icon ' + iconClass} />}
                     <div className="drag-handle">
                         <i className="material-icons tree-node-grab">drag_indicator</i>
-                        {/* { dragging && <span>{event.title}</span>} */}
                     </div>
-                    <div title={label} className={'tree-view-text'}>
+                    <div title={label} className="tree-view-text">
                         <TreeText
                             _id={data._id}
                             value={value}
                             onValueChange={onValueChange}
                             nextSequence={nextSequence /* Saves a nasty lookup later*/}
                         />
+                        <select value={data.type} onChange={onTypeChange}>
+                            <option value='chapter'>Chapter</option>
+                            <option value='event'>Event</option>
+                        </select>
                     </div>
                 </div>
                 <div className={containerClassName}>
@@ -316,7 +336,7 @@ function mapStateToProps(state, ownProps) {
     // Get children of this node and sort by sequence property
     const childrenData = childrenForParentId(state, ownProps.data._id).sort((a, b) => a.sequence - b.sequence);
     const collapsed = isCollapsed(state, ownProps.data._id);
-    const dragging = get(state, 'NOVEL_EVENT.dragging', false);
+    const dragging = get(state, 'NOVEL_MODEL.dragging', false);
     return {
         childrenData,
         collapsed,

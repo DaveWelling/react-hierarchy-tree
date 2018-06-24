@@ -2,6 +2,9 @@
     /* margin: .2em 0 .2em 0; */
     border: none;
     width: 100%;
+    color: white;
+    background-color: black;
+    padding-left: .2em;
 }
 /* .tree-text:hover {
     border: thin black solid;

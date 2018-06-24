@@ -24,21 +24,21 @@ export const childrenForParentId = createSelector(
     ormSelector,
     addIdAsInput,
     ormCreateSelector(orm, (session, parentId) => {
-        if (!parentId) return session.Event.filter({parent:undefined}).orderBy('sequence').toRefArray();
-        let parent = session.Event.withId(parentId);
+        if (!parentId) return session.Model.filter({parent:undefined}).orderBy('sequence').toRefArray();
+        let parent = session.Model.withId(parentId);
         let children = parent.children;
         children = children.orderBy(['sequence'])
         return children.toRefArray();
     })
 );
 
-export const getEventRef = (state, _id)=> state.Event ? state.Event.itemsById[_id] : state.orm.Event.itemsById[_id];
+export const getModelRef = (state, _id)=> state.Model ? state.Model.itemsById[_id] : state.orm.Model.itemsById[_id];
 
-const parentIdSelector = (state, _id) => getEventRef(state, _id).parent;
+const parentIdSelector = (state, _id) => getModelRef(state, _id).parent;
 
 export const isCollapsed = createSelector(
-    getEventRef,
-    (event)=> event.ui.collapsed
+    getModelRef,
+    (model)=> model.ui.collapsed
 );
 
 /**
@@ -79,9 +79,9 @@ export const getNextSibling = createSelector(
         (session, parentId, _id) =>{
             let children;
             if (!parentId) {
-                children = session.Event.filter({parent:undefined}).orderBy('sequence').toRefArray();
+                children = session.Model.filter({parent:undefined}).orderBy('sequence').toRefArray();
             } else {
-                const parent = session.Event.withId(parentId);
+                const parent = session.Model.withId(parentId);
                 children = parent.children.orderBy('sequence').toRefArray();
             }
             return children.reduce((result, child, i)=>{

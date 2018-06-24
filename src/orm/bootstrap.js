@@ -9,7 +9,7 @@ export default function bootstrap(orm) {
 
     // Model classes are available as properties of the
     // Session instance.
-    const { Event } = mutableSession;
+    const { Model } = mutableSession;
 
     getData(3, 3);
 
@@ -23,7 +23,7 @@ export default function bootstrap(orm) {
                 parent: parent ? parent._id : undefined,
                 sequence: index
             };
-            Event.create(newNode);
+            Model.create(newNode);
             getData(depth - 1, depthCount, newNode);
         }
     }
