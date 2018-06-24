@@ -3,6 +3,7 @@ import './editView.css';
 import {connect} from 'react-redux';
 import {getNovelChapter} from './orm/selector/novelChapterSelectors';
 import RichText from './RichText';
+import './novelChapterView.css';
 
 class NovelChapterView extends React.Component {
     constructor(props){
@@ -42,7 +43,7 @@ class NovelChapterView extends React.Component {
         };
         const text = this.props.novelChapter ? this.props.novelChapter.text : undefined;
         const {onChange} = this;
-        return <RichText hNode={meta} onchange={onChange} value={text}></RichText>;
+        return <RichText className='chapter-rich-text' hNode={meta} onchange={onChange} value={text}></RichText>;
     }
 }
 

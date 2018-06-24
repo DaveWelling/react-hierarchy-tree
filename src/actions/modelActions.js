@@ -1,6 +1,7 @@
 
 import cuid from 'cuid';
 import { getPreviousSibling, getModelRef, childrenForParentId, getNextSibling } from '../orm/selector/modelSelectors';
+import config from '../config';
 
 //************* MOVE ACTIONS OUT OF TREENODE INTO HERE USING GETSTATE FROM THUNK *************************
 export function makeChildOfPreviousSibling(_id, selectionStart, selectionEnd) {
@@ -112,7 +113,7 @@ export function makeNextSiblingOfModel(targetId, siblingModel) {
     }
 }
 
-export function addChild(previousChild, newChildValue, sequenceAfterPreviousChild) {
+export function addChild(previousChild, newChildValue, sequenceAfterPreviousChild, type=config.defaultModelType) {
     return function(dispatch) {
         // increment sequence by half of the last digit of the previous child's sequence
         const newSequence = sequenceAfterPreviousChild
@@ -125,7 +126,7 @@ export function addChild(previousChild, newChildValue, sequenceAfterPreviousChil
             value: newChildValue,
             parent: previousChild.parent,
             sequence: newSequence,
-            type: defaultModelType
+            type
         }
         dispatch({
             type: 'CREATE_NOVEL_MODEL',
@@ -142,7 +143,12 @@ export function addChild(previousChild, newChildValue, sequenceAfterPreviousChil
         });
         dispatch({
             type: 'FOCUS_NOVEL_MODEL',
-            focus: {_id: newId, model: newModel}
+            focus: {
+                _id: newId,
+                model: newModel,
+                selectionStart: 0,
+                selectionEnd: 0
+            }
         });
     }
 }

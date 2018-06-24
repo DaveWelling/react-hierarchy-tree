@@ -35,13 +35,33 @@ form input {
   border: #05171a;
   padding: .5em;
 }
-
+input:focus {
+  outline-color: darkslategray;
+}
 ul {
   margin: 0;
   padding: 0;
   -webkit-margin: 0;
 }
+::-webkit-scrollbar {
+  width: 9px;
+}
 
+::-webkit-scrollbar-track {
+  background: black;
+}
+::-webkit-scrollbar-track-piece {
+  /* background: #05171a */
+}
+::-webkit-scrollbar {
+  /* background: #05171a */
+}
+::-webkit-scrollbar-thumb {
+  background: #18292c;
+}
+::-webkit-scrollbar-corner {
+  background: black;
+}
 .leftSplit {
   overflow-y: auto;
 }

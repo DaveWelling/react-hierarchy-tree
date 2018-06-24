@@ -122,7 +122,7 @@ class TreeText extends React.Component {
         const newValue = value.substr(0, cursorPosition);
         const siblingValue = value.substr(cursorPosition);
         onValueChange(newValue);
-        dispatch(addChild(model, siblingValue, nextSequence));
+        dispatch(addChild(model, siblingValue, nextSequence, model.type));
     }
 
     onSelect(e) {}

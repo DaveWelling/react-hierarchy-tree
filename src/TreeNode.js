@@ -6,7 +6,7 @@ import { childrenForParentId, isCollapsed } from './orm/selector/modelSelectors'
 import './TreeNode.css';
 import interact from 'interactjs';
 import { get } from 'lodash';
-import {makeNextSiblingOfModel} from './actions/modelActions';
+import {makeNextSiblingOfModel, focus} from './actions/modelActions';
 
 class TreeNode extends React.Component {
     constructor(props) {
@@ -231,6 +231,7 @@ class TreeNode extends React.Component {
                 }
             }
         });
+        dispatch(focus(this.props.data));
 
     }
     onValueChange(newValue) {
