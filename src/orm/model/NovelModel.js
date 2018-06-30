@@ -2,7 +2,6 @@ import { ORM,  Model as BaseModel, many, fk, attr } from 'redux-orm';
 import { PropTypes } from 'react';
 import propTypesMixin from 'redux-orm-proptypes';
 import config from '../../config';
-
 const ValidatingModel = propTypesMixin(BaseModel);
 
 export class Model extends ValidatingModel{
@@ -76,7 +75,7 @@ export class Model extends ValidatingModel{
                 const model = Model.withId(action.ensureExpanded._id);
                 function expandToRoot(expandingModel){
                     expandingModel.ui.collapsed = false;
-                    if (expandingModel.parent) {
+                    if (expandingModel.parent._id !== config.rootModelId) {
                         expandToRoot(expandingModel.parent);
                     }
                 }

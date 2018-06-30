@@ -1,7 +1,7 @@
 import React from 'react';
 import './editView.css';
 import {connect} from 'react-redux';
-import {getNovelChapter} from './orm/selector/novelChapterSelectors';
+import {getNovelChapter} from '../orm/selector/novelChapterSelectors';
 import RichText from './RichText';
 import './novelChapterView.css';
 

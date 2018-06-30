@@ -1,9 +1,12 @@
+
 export default function MODELReducer(state={selectedId:undefined}, action){
     switch (action.type) {
         case 'FOCUS_NOVEL_MODEL':
             return {
                 selectedId: action.focus._id,
-                model: action.focus.model
+                model: action.focus.model,
+                selectionStart: action.focus.selectionStart,
+                selectionEnd: action.focus.selectionEnd
             }
             break;
         case 'DRAG_NOVEL_MODEL_START':

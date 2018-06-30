@@ -1,0 +1,6 @@
+.chapter-rich-text {
+    height: calc(100% - 2em);
+    padding: 0;
+    margin: 1em;
+    background-color: black;
+}

@@ -1,7 +1,7 @@
 import React from 'react';
 import './editView.css';
 import {connect} from 'react-redux';
-import {getNovelEvent} from './orm/selector/novelEventSelectors';
+import {getNovelEvent} from '../orm/selector/novelEventSelectors';
 import RichText from './RichText';
 import DatePicker from 'react-datepicker';
 import moment from 'moment';

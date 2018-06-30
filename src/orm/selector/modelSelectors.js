@@ -24,7 +24,6 @@ export const childrenForParentId = createSelector(
     ormSelector,
     addIdAsInput,
     ormCreateSelector(orm, (session, parentId) => {
-        if (!parentId) return session.Model.filter({parent:undefined}).orderBy('sequence').toRefArray();
         let parent = session.Model.withId(parentId);
         let children = parent.children;
         children = children.orderBy(['sequence'])

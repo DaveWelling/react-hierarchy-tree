@@ -82,3 +82,9 @@ ul {
   background-image:  url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
   cursor: ew-resize;
 }
+
+.innerLeftSplit {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+}

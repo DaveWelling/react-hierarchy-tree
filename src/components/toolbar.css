@@ -1,0 +1,23 @@
+.toolbar {
+    min-height: 3em;
+    width: 100%;
+    background-color: #02181a;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+}
+
+.toolbar-button {
+    background: transparent;
+    color: white;
+    margin: .25em;
+    border: none;
+}
+
+.toolbar-button:hover {
+    background: black;
+}
+
+.toolbar-button:focus {
+    outline: none;
+}

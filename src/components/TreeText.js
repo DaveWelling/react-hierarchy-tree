@@ -1,14 +1,14 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { getModelRef } from './orm/selector/modelSelectors';
-import { makeChildOfPreviousSibling, addChild, makeSiblingOfParent, mergeWithPreviousSibling, moveToPrevious, moveToNext, focus } from './actions/modelActions';
+import { getModelRef } from '../orm/selector/modelSelectors';
+import { makeChildOfPreviousSibling, addChild, makeSiblingOfParent, mergeWithPreviousSibling, moveToPrevious, moveToNext, focus } from '../actions/modelActions';
 
 import './treeText.css';
 class TreeText extends React.Component {
     constructor(props) {
         super(props);
         this.onChange = this.onChange.bind(this);
-        this.onFocus = this.onFocus.bind(this);
+        this.onSelect = this.onSelect.bind(this);
         this.onKeyPress = this.onKeyPress.bind(this);
         this.onKeyDown = this.onKeyDown.bind(this);
         this.addSibling = this.addSibling.bind(this);
@@ -60,7 +60,7 @@ class TreeText extends React.Component {
         this.props.onValueChange(e.target.value);
     }
     onFocus(e) {
-        this.props.dispatch(focus(this.props.model));
+
     }
 
     onKeyDown(e) {
@@ -81,8 +81,8 @@ class TreeText extends React.Component {
                 if (e.target.selectionStart === 0) {
                     let {model, dispatch} = this.props;
                     dispatch(mergeWithPreviousSibling(model));
+                    e.preventDefault();
                 }
-                e.preventDefault();
                 break;
             case 9: // Tab
                 let {_id, model, dispatch} = this.props;
@@ -125,10 +125,12 @@ class TreeText extends React.Component {
         dispatch(addChild(model, siblingValue, nextSequence, model.type));
     }
 
-    onSelect(e) {}
+    onSelect(e) {
+        this.props.dispatch(focus(this.props.model, e.target.selectionStart, e.target.selectionEnd));
+    }
 
     render() {
-        const { onChange, onKeyPress, onKeyDown, onFocus } = this;
+        const { onChange, onKeyPress, onKeyDown, onSelect } = this;
         return (
             <input
                 ref={input => {
@@ -141,7 +143,7 @@ class TreeText extends React.Component {
                 onKeyPress={onKeyPress}
                 onKeyDown={onKeyDown}
                 onChange={onChange}
-                onFocus={onFocus}
+                onSelect={onSelect}
             />
         );
     }

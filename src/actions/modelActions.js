@@ -263,15 +263,15 @@ export function moveToNext(model) {
     }
 }
 
-export function focus(model){
+export function focus(model, selectionStart=0, selectionEnd=0){
     return function(dispatch, getState) {
         dispatch({
             type: 'FOCUS_NOVEL_MODEL',
             focus: {
                 _id: model._id,
                 model,
-                selectionStart: 0,
-                selectionEnd: 0
+                selectionStart,
+                selectionEnd
             }
         });
     }

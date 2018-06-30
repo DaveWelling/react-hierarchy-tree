@@ -2,11 +2,12 @@ import React from 'react';
 import { object, string, func, bool } from 'prop-types';
 import TreeText from './TreeText';
 import { connect } from 'react-redux';
-import { childrenForParentId, isCollapsed } from './orm/selector/modelSelectors';
+import { childrenForParentId, isCollapsed } from '../orm/selector/modelSelectors';
 import './TreeNode.css';
 import interact from 'interactjs';
 import { get } from 'lodash';
-import {makeNextSiblingOfModel, focus} from './actions/modelActions';
+import {makeNextSiblingOfModel, focus} from '../actions/modelActions';
+import config from '../config';
 
 class TreeNode extends React.Component {
     constructor(props) {
@@ -293,8 +294,9 @@ class TreeNode extends React.Component {
                             nextSequence={nextSequence /* Saves a nasty lookup later*/}
                         />
                         <select value={data.type} onChange={onTypeChange}>
-                            <option value='chapter'>Chapter</option>
-                            <option value='event'>Event</option>
+                            {config.dataTypes.map(type=>{
+                                return <option key={type.title} value={type.title}>{type.prettyName}</option>
+                            })}
                         </select>
                     </div>
                 </div>

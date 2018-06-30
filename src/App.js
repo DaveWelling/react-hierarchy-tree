@@ -1,10 +1,12 @@
 import './App.css';
-import './TreeNode.css';
+import './components/TreeNode.css';
 import React, { Component } from 'react';
-import TreeView from './TreeView';
-import EditView from './EditView';
+import TreeView from './components/TreeView';
+import EditView from './components/EditView';
 import Split from 'split.js';
-
+import Toolbar from './components/Toolbar';
+import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer, toast } from 'react-toastify';
 
 const id = 'app';
 class App extends Component {
@@ -40,10 +42,14 @@ class App extends Component {
         return (
             <div className="App">
               <div id={'splitLeft-'+id} className="fullHeight leftSplit">
-                <TreeView />
+                <div className="fullHeight innerLeftSplit">
+                    <TreeView />
+                    <Toolbar />
+                </div>
               </div>
               <div id={'splitRight-'+id} className="fullHeight">
                 <EditView />
+                <ToastContainer/>
               </div>
             </div>
         );

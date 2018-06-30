@@ -80,9 +80,18 @@ export class RichText extends Component {
     }
 
     componentWillReceiveProps(newProps) {
+        const {mentions, id, value } = this.props;
         // if mentions reference has been changed.
-        if (newProps.mentions !== this.props.mentions) {
+        if (newProps.mentions !== mentions) {
             this.setSuggestions(newProps.mentions);
+        }
+        if (id !== newProps.id){
+            let editorState = newProps.value
+                ? EditorState.createWithContent(convertFromRaw(newProps.value))
+                : EditorState.createEmpty();
+            this.setState({
+                editorState
+            });
         }
     }
 
@@ -90,10 +99,14 @@ export class RichText extends Component {
         this.setState({
             editorState
         });
-        this.sendToModel(editorState);
+        this.sendToModel(editorState, this.props.id);
     }
 
-    sendToModel(editorState) {
+    sendToModel(editorState, id) {
+        if (this.props.id !== id) {
+            debugger;
+            return;
+        }
         let contentState = editorState.getCurrentContent();
         let raw = convertToRaw(contentState);
         this.props.onchange({
