@@ -1,6 +1,6 @@
 import bootstrap from './orm/bootstrap';
 import orm from './orm';
-import NOVEL_MODEL from './reducers/modelReducer';
+import getModelReducer from './reducers/modelReducer';
 import thunk from 'redux-thunk';
 import config from './config';
 import { persistStore, persistReducer } from 'redux-persist';
@@ -9,17 +9,26 @@ import { createStore, combineReducers, applyMiddleware, compose } from 'redux';
 import { createReducer } from 'redux-orm';
 import eventSink from './eventSink';
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
-import {get} from 'lodash';
+import cuid from 'cuid';
+
+
+const rootModelId = config.rootModelId || cuid();
+const initialOrmState = bootstrap(orm, rootModelId);
+
+const initialNovelModelState = getInitialNovelModelState(rootModelId, initialOrmState);
 
 // add other reducers as properties beside 'orm'
 const appReducer = combineReducers({
     orm: createReducer(orm),
-    NOVEL_MODEL
+    NOVEL_MODEL: getModelReducer(initialNovelModelState)
 });
 
 const rootReducer = (state, action) => {
     if (action.type === 'IMPORT_NOVEL') {
         state = getImportedState(action);
+    }
+    if (action.type === 'CLEAR_NOVEL') {
+        state = clearState();
     }
     return appReducer(state, action);
 };
@@ -36,11 +45,12 @@ const persistedReducer = persistReducer(persistConfig, rootReducer);
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 const store = createStore(
     persistedReducer,
-    bootstrap(orm),
+    initialOrmState,
     composeEnhancers(applyMiddleware(thunk, eventSink.eventSink))
 );
 
 export default store;
+
 export const persistor = persistStore(store, null, function(){
     // let state = store.getState();
     // debugger;
@@ -49,6 +59,17 @@ export const persistor = persistStore(store, null, function(){
     //     config.rootModelId = rootModelId;
     // }
 });
+
+export function clearState(){
+    persistor.purge();
+    const rootModelId = cuid();
+    const ormState = bootstrap(orm, rootModelId);
+
+    return {
+        orm: ormState,
+        NOVEL_MODEL: getInitialNovelModelState(rootModelId, ormState)
+    };
+}
 
 function getImportedState(action) {
     const rootModelId = action.import.data.rootModelId;
@@ -59,4 +80,15 @@ function getImportedState(action) {
             rootModelId
         }
     };
+}
+
+function getInitialNovelModelState(rootModelId, initialOrmState) {
+    const defaultFocusModel = Object.values(initialOrmState.orm.Model.itemsById).find(m=>m.parent===rootModelId && m.title==='');
+    return {
+        rootModelId,
+        selectedId: defaultFocusModel ? defaultFocusModel._id: undefined,
+        model: defaultFocusModel,
+        selectionStart: 0,
+        selectionEnd: 0
+    }
 }

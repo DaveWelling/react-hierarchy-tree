@@ -1,7 +1,6 @@
 import cuid from 'cuid';
-import config from '../config';
 
-export default function bootstrap(orm) {
+export default function bootstrap(orm, rootModelId, loadDemoState=false) {
     // Get the empty state according to our schema.
     const initialState = orm.getEmptyState();
 
@@ -14,14 +13,24 @@ export default function bootstrap(orm) {
     const { Model } = mutableSession;
 
     Model.create({
-        _id: config.rootModelId,
+        _id: rootModelId,
         title: 'Root Model - this should not display',
         sequence: 0
     });
+    Model.create({
+        _id: cuid(),
+        title: '',
+        sequence: 0,
+        parent: rootModelId,
+        ui: {
+            selectionStart: 0,
+            selectionEnd: 0
+        }
+    });
 
-    getData(3, 3);
+    if (loadDemoState) getDemoData(3, 3);
 
-    function getData(depth, depthCount, parent) {
+    function getDemoData(depth, depthCount, parent) {
         if (depth <= 0) return;
         for (let index = 0; index < depthCount; index++) {
             const _id = cuid();
@@ -32,7 +41,7 @@ export default function bootstrap(orm) {
                 sequence: index
             };
             Model.create(newNode);
-            getData(depth - 1, depthCount, newNode);
+            getDemoData(depth - 1, depthCount, newNode);
         }
     }
 

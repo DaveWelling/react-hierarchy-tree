@@ -3,6 +3,7 @@ import TreeNode from './TreeNode';
 import { connect } from 'react-redux';
 import {childrenForParentId} from '../orm/selector/modelSelectors';
 import './treeView.css';
+import {get} from 'lodash';
 
 export class TreeView extends React.Component {
     render() {

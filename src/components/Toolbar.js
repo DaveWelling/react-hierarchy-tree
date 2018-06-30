@@ -3,12 +3,14 @@ import { connect } from 'react-redux';
 import './toolbar.css';
 import { toast } from 'react-toastify';
 import {get} from 'lodash';
+import {clearState} from '../store';
 
 class Toolbar extends React.Component {
     constructor(props) {
         super(props);
         this.download = this.download.bind(this);
         this.upload = this.upload.bind(this);
+        this.clear = this.clear.bind(this);
     }
 
     componentDidMount(){
@@ -61,11 +63,11 @@ class Toolbar extends React.Component {
             window.URL.revokeObjectURL(url);
         }, 0);
     }
-    clickFileInput() {
-
+    clear() {
+        clearState();
     }
     render() {
-        const { download, upload, clickFileInput } = this;
+        const { download, upload, clear } = this;
         return (
             <div className="toolbar">
                 <button className="toolbar-button" onClick={download}>
@@ -82,6 +84,9 @@ class Toolbar extends React.Component {
                 />
                 <button id="visibleFileElem" className="toolbar-button" >
                     <i className="material-icons">cloud_upload</i>
+                </button>
+                <button className="toolbar-button" onClick={clear}>
+                    <i className="material-icons">clear</i>
                 </button>
             </div>
         );
