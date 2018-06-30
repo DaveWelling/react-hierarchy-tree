@@ -1,8 +1,8 @@
 {
-  "name": "treeShit",
+  "name": "react-hierarchy-tree",
   "version": "1.0.0",
-  "description": "Describe treeShit here",
-  "private": true,
+  "description": "Create a hierarchy of objects that may be edited",
+  "private": false,
   "scripts": {
     "build": "nwb build-react-app",
     "clean": "nwb clean-app",
@@ -41,7 +41,7 @@
   "devDependencies": {
     "nwb": "0.21.x"
   },
-  "author": "",
+  "author": "Dave Welling",
   "license": "MIT",
-  "repository": ""
+  "repository": "https://github.com/DaveWelling/react-hierarchy-tree.git"
 }
