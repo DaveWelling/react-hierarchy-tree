@@ -1,8 +1,10 @@
+import config from '../config';
 
-export default function MODELReducer(state={selectedId:undefined}, action){
+export default function MODELReducer(state={selectedId:undefined, rootModelId: config.rootModelId}, action){
     switch (action.type) {
         case 'FOCUS_NOVEL_MODEL':
             return {
+                ...state,
                 selectedId: action.focus._id,
                 model: action.focus.model,
                 selectionStart: action.focus.selectionStart,

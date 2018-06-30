@@ -5,8 +5,7 @@ const config = {
         {title:'chapter', prettyName:'Chapter'},
         {title:'event', prettyName:'Event'},
         {title:'summary', prettyName: 'Summary'}
-    ],
-    rootModelId: cuid()
+    ]
 };
 
 export default config;

@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import './toolbar.css';
 import { toast } from 'react-toastify';
-import config from '../config';
+import {get} from 'lodash';
 
 class Toolbar extends React.Component {
     constructor(props) {
@@ -46,7 +46,7 @@ class Toolbar extends React.Component {
     download() {
         const exportData = {
             orm: this.props.ormData,
-            rootModelId: config.rootModelId
+            rootModelId: this.props.rootModelId
         };
         let blob = new Blob([JSON.stringify(exportData, null, 4)], { type: 'text/plain;charset=utf-8' });
         let a = document.createElement('a');
@@ -89,8 +89,9 @@ class Toolbar extends React.Component {
 }
 
 function mapStateToProps(state, ownProps) {
-    let ormData = state.orm;
-    return { ormData };
+    const ormData = state.orm;
+    const rootModelId = get(state, 'NOVEL_MODEL.rootModelId')
+    return { ormData, rootModelId };
 }
 
 export default connect(mapStateToProps)(Toolbar);

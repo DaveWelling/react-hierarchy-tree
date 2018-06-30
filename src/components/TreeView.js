@@ -3,7 +3,6 @@ import TreeNode from './TreeNode';
 import { connect } from 'react-redux';
 import {childrenForParentId} from '../orm/selector/modelSelectors';
 import './treeView.css';
-import config from '../config';
 
 export class TreeView extends React.Component {
     render() {
@@ -27,7 +26,9 @@ export class TreeView extends React.Component {
 
 function mapStateToProps(state, ownProps) {
     // Get root nodes and sort by sequence property
-    let childrenData = childrenForParentId(state, config.rootModelId)
+
+    const rootModelId = get(state, 'NOVEL_MODEL.rootModelId')
+    let childrenData = childrenForParentId(state, rootModelId)
         .sort((a,b)=> a.sequence-b.sequence);
     return {
         childrenData
