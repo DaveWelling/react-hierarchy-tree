@@ -1,6 +1,13 @@
 const path = require('path');
 module.exports = {
   type: 'react-app',
+  devServer: {
+    port: 80,
+    allowedHosts: [
+      'localhost',
+      'novel.davewelling.com'
+    ]
+  },
   webpack: {
     rules: {
       babel: {
