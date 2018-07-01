@@ -4,6 +4,7 @@ import './toolbar.css';
 import { toast } from 'react-toastify';
 import {get} from 'lodash';
 import {clearState} from '../store';
+import {uploadFile} from '../googleDrive';
 
 class Toolbar extends React.Component {
     constructor(props) {
@@ -11,6 +12,7 @@ class Toolbar extends React.Component {
         this.download = this.download.bind(this);
         this.upload = this.upload.bind(this);
         this.clear = this.clear.bind(this);
+        this.save = this.save.bind(this);
     }
 
     componentDidMount(){
@@ -66,8 +68,15 @@ class Toolbar extends React.Component {
     clear() {
         clearState();
     }
+    save(){
+        const exportData = {
+            orm: this.props.ormData,
+            rootModelId: this.props.rootModelId
+        };
+        uploadFile(exportData);
+    }
     render() {
-        const { download, upload, clear } = this;
+        const { download, upload, clear, save } = this;
         return (
             <div className="toolbar">
                 <button className="toolbar-button" onClick={download}>
@@ -87,6 +96,9 @@ class Toolbar extends React.Component {
                 </button>
                 <button className="toolbar-button" onClick={clear}>
                     <i className="material-icons">clear</i>
+                </button>
+                <button className="toolbar-button" onClick={save}>
+                    <i className="material-icons">save_alt</i>
                 </button>
             </div>
         );
