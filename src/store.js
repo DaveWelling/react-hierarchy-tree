@@ -28,7 +28,7 @@ const rootReducer = (state, action) => {
         state = getImportedState(action);
     }
     if (action.type === 'CLEAR_NOVEL') {
-        state = clearState();
+        state = getEmptyState();
     }
     return appReducer(state, action);
 };
@@ -52,28 +52,21 @@ const store = createStore(
 export default store;
 
 export const persistor = persistStore(store, null, function(){
-    // let state = store.getState();
-    // debugger;
-    // let rootModelId = get(state, 'NOVEL_MODEL.rootModelId');
-    // if (rootModelId !== undefined){
-    //     config.rootModelId = rootModelId;
-    // }
+    //optional callback for when rehydration of local data for the store is finished.
 });
 
-export function clearState(){
-    persistor.purge();
+function getEmptyState(){
     const rootModelId = cuid();
     const ormState = bootstrap(orm, rootModelId);
 
     return {
-        orm: ormState,
+        ...ormState,
         NOVEL_MODEL: getInitialNovelModelState(rootModelId, ormState)
     };
 }
 
 function getImportedState(action) {
     const rootModelId = action.import.data.rootModelId;
-    persistor.purge();
     return {
         orm: action.import.data.orm,
         NOVEL_MODEL: {

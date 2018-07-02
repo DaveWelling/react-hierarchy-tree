@@ -3,8 +3,9 @@ import { connect } from 'react-redux';
 import './toolbar.css';
 import { toast } from 'react-toastify';
 import {get} from 'lodash';
-import {clearState} from '../store';
-import {uploadFile} from '../googleDrive';
+import {persistor} from '../store';
+import {saveGoogleDriveFile, openGoogleDriveFile} from '../googleDrive';
+import {clearState} from '../actions/globalActions';
 
 class Toolbar extends React.Component {
     constructor(props) {
@@ -13,6 +14,7 @@ class Toolbar extends React.Component {
         this.upload = this.upload.bind(this);
         this.clear = this.clear.bind(this);
         this.save = this.save.bind(this);
+        this.open = this.open.bind(this);
     }
 
     componentDidMount(){
@@ -35,6 +37,7 @@ class Toolbar extends React.Component {
         let reader = new FileReader();
         reader.onload = function (e) {
             let ormData = JSON.parse(e.target.result);
+            persistor.purge();
             dispatch({
                 type: 'IMPORT_NOVEL',
                 import: {data: ormData}
@@ -66,20 +69,29 @@ class Toolbar extends React.Component {
         }, 0);
     }
     clear() {
-        clearState();
+        this.props.dispatch(clearState());
     }
     save(){
         const exportData = {
             orm: this.props.ormData,
             rootModelId: this.props.rootModelId
         };
-        uploadFile(exportData);
+        saveGoogleDriveFile(exportData);
+    }
+    open() {
+        openGoogleDriveFile().then(data=>{
+            persistor.purge();
+            this.props.dispatch({
+                type: 'IMPORT_NOVEL',
+                import: {data}
+            });
+        });
     }
     render() {
-        const { download, upload, clear, save } = this;
+        const { download, upload, clear, save, open } = this;
         return (
             <div className="toolbar">
-                <button className="toolbar-button" onClick={download}>
+                <button title="Download" className="toolbar-button" onClick={download}>
                     <i className="material-icons">cloud_download</i>
                 </button>
                 <input
@@ -91,14 +103,17 @@ class Toolbar extends React.Component {
                     onChange={upload}
 
                 />
-                <button id="visibleFileElem" className="toolbar-button" >
+                <button title="Upload" id="visibleFileElem" className="toolbar-button" >
                     <i className="material-icons">cloud_upload</i>
                 </button>
-                <button className="toolbar-button" onClick={clear}>
+                <button title="Clear" className="toolbar-button" onClick={clear}>
                     <i className="material-icons">clear</i>
                 </button>
-                <button className="toolbar-button" onClick={save}>
+                <button title="Save to Google Drive" className="toolbar-button" onClick={save}>
                     <i className="material-icons">save_alt</i>
+                </button>
+                <button title="Open from Google Drive" className="toolbar-button" onClick={open}>
+                    <i className="material-icons">open_in_browser</i>
                 </button>
             </div>
         );
