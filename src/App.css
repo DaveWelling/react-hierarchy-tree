@@ -18,11 +18,34 @@
 }
 
 select {
-  border-radius: 2px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding: .5em 1.5em .5em .5em;
+  border-radius: 3px;
+  font-size: 1em;
   color: lightslategray;
   background: black;
   border-color: lightslategray;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
 }
+
+
+.select-container {position:relative; display: inline;}
+.select-container:after {content:""; width:0; height:0; position:absolute; pointer-events: none;}
+.select-container:after {
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    top: .8em;
+    right: .55em;
+    border-top: 9px solid lightslategray;
+}
+select::-ms-expand {
+    display: none;
+}
+
 
 form {
   padding: 1em;

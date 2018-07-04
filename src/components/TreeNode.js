@@ -293,11 +293,13 @@ class TreeNode extends React.Component {
                             onValueChange={onValueChange}
                             nextSequence={nextSequence /* Saves a nasty lookup later*/}
                         />
-                        <select value={data.type} onChange={onTypeChange}>
-                            {config.dataTypes.map(type=>{
-                                return <option key={type.title} value={type.title}>{type.prettyName}</option>
-                            })}
-                        </select>
+                        <div className="select-container">
+                            <select value={data.type} onChange={onTypeChange}>
+                                {config.dataTypes.map(type=>{
+                                    return <option key={type.title} value={type.title}>{type.prettyName}</option>
+                                })}
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div className={containerClassName}>
