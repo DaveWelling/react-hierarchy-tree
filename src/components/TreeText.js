@@ -31,7 +31,7 @@ class TreeText extends React.Component {
 
     removeSelectionFromState() {
         this.props.dispatch({
-            type: 'UPDATE_NOVEL_MODEL',
+            type: 'update_app_model',
             update: {
                 _id: this.props._id,
                 changes: {
@@ -60,9 +60,6 @@ class TreeText extends React.Component {
 
     onChange(e) {
         this.props.onValueChange(e.target.value);
-    }
-    onFocus(e) {
-
     }
 
     onKeyDown(e) {
@@ -124,10 +121,13 @@ class TreeText extends React.Component {
     onSelect(e) {
         this.props.dispatch(focus(this.props.model, e.target.selectionStart, e.target.selectionEnd));
     }
+    onFocus(e) {
+
+    }
 
     render() {
-        const { onChange, onKeyPress, onKeyDown, onSelect } = this;
-        const { isSelected } = this.props;
+        const { onChange, onKeyDown } = this;
+        const { onFocus } = this.props;
         return <EditableShell
                     ref={input => {
                         this.inputRef = input;
@@ -138,6 +138,7 @@ class TreeText extends React.Component {
                     value={this.props.model.title}
                     onKeyDown={onKeyDown}
                     onChange={onChange}
+                    onFocus={onFocus}
                 />;
     }
 }
@@ -146,7 +147,7 @@ function mapStateToProps(state, props) {
     const {_id} = props;
     const model = getModelRef(state, _id);
     const id = 'text' + _id;
-    const selectedId = get(state, 'NOVEL_MODEL.selectedId');
+    const selectedId = get(state, 'app_model.selectedId');
     const isSelected = (selectedId === _id);
 
 

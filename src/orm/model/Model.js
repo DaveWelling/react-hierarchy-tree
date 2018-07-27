@@ -8,21 +8,21 @@ export class Model extends ValidatingModel{
     static reducer(action, Model, session) {
         const { type } = action;
         switch (type) {
-            case 'CREATE_NOVEL_MODEL':
+            case 'create_app_model':
                 let newModel = Model.create(action.create.newModel);
                 break;
-            case 'UPDATE_NOVEL_MODEL':
+            case 'update_app_model':
                 const { update:{changes}} = action;
                 Model.withId(action.update._id).update(changes);
                 break;
-            case 'REMOVE_NOVEL_MODEL':
+            case 'remove_app_model':
                 Model.withId(action.remove._id).delete();
                 break;
-            case 'TRANSFER_NOVEL_MODEL':
+            case 'transfer_app_model':
                 const { transfer:{currentParentId, newParentId}} = action;
                 Model.withId(currentParentId).children.update({parent:newParentId});
                 break;
-            case 'RESEQUENCE_NOVEL_MODEL':
+            case 'resequence_app_model':
                 const {_id, parentId, position} = action.resequence;
                 const children = Model.withId(parentId).children;
                 let newSequence;
@@ -37,7 +37,7 @@ export class Model extends ValidatingModel{
 
         // UI actions
         switch (type) {
-            case 'DRAG_NOVEL_MODEL_START': {
+            case 'drag_app_model_start': {
                 const model = Model.withId(action.drag.model._id);
                 model.update({
                     ui: {
@@ -47,7 +47,7 @@ export class Model extends ValidatingModel{
                 });
                 break;
             }
-            case 'DRAG_NOVEL_MODEL_END': {
+            case 'drag_app_model_end': {
                 const model = Model.withId(action.drag.model._id);
                 model.update({
                     ui: {
@@ -71,7 +71,7 @@ export class Model extends ValidatingModel{
                 model.update({ui: {collapsed: true}});
                 break;
             }
-            case 'EnsureExpanded_novel_model': {
+            case 'ensureExpanded_app_model': {
                 const model = Model.withId(action.ensureExpanded._id);
                 function expandToRoot(expandingModel){
                     expandingModel.ui.collapsed = false;
@@ -82,7 +82,7 @@ export class Model extends ValidatingModel{
                 if (model.parent) expandToRoot(model.parent);
                 break;
             }
-            case 'FOCUS_NOVEL_MODEL': {
+            case 'focus_app_model': {
                 const {_id, selectionStart, selectionEnd} = action.focus;
                 const model = Model.withId(_id);
                 model.update({ui: {...model.ui, selectionStart, selectionEnd}})

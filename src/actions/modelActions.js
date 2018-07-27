@@ -11,7 +11,7 @@ export function makeChildOfPreviousSibling(_id, selectionStart, selectionEnd) {
         const previousSiblingData = getPreviousSibling(state, _id);
         if (!previousSiblingData) return; // first sibling cannot be indented further
         dispatch({
-            type: 'UPDATE_NOVEL_MODEL',
+            type: 'update_app_model',
             update: {
                 _id,
                 changes: {
@@ -20,7 +20,7 @@ export function makeChildOfPreviousSibling(_id, selectionStart, selectionEnd) {
             }
         });
         dispatch({
-            type: 'RESEQUENCE_NOVEL_MODEL',
+            type: 'resequence_app_model',
             resequence: {
                 _id,
                 parentId: previousSiblingData._id,
@@ -28,13 +28,13 @@ export function makeChildOfPreviousSibling(_id, selectionStart, selectionEnd) {
             }
         });
         dispatch({
-            type: 'EnsureExpanded_novel_model',
+            type: 'ensureExpanded_app_model',
             ensureExpanded: {
                 _id
             }
         });
         dispatch({
-            type: 'FOCUS_NOVEL_MODEL',
+            type: 'focus_app_model',
             focus: {
                 _id,
                 model,
@@ -60,7 +60,7 @@ export function makeSiblingOfParent(model, selectionStart, selectionEnd) {
             ? previousParent.sequence + (sequenceAfterPreviousParent - previousParent.sequence) / 2
             : previousParent.sequence + 1;
         dispatch({
-            type: 'UPDATE_NOVEL_MODEL',
+            type: 'update_app_model',
             update: {
                 _id,
                 changes: {
@@ -70,7 +70,7 @@ export function makeSiblingOfParent(model, selectionStart, selectionEnd) {
             }
         });
         dispatch({
-            type: 'FOCUS_NOVEL_MODEL',
+            type: 'focus_app_model',
             focus: {
                 _id,
                 model,
@@ -92,7 +92,7 @@ export function makeNextSiblingOfModel(targetId, siblingModel) {
             ? siblingModel.sequence + (sequenceAfterSiblingModel - siblingModel.sequence) / 2
             : siblingModel.sequence + 1;
         dispatch({
-            type: 'UPDATE_NOVEL_MODEL',
+            type: 'update_app_model',
             update: {
                 _id: targetId,
                 changes: {
@@ -102,7 +102,7 @@ export function makeNextSiblingOfModel(targetId, siblingModel) {
             }
         });
         dispatch({
-            type: 'FOCUS_NOVEL_MODEL',
+            type: 'focus_app_model',
             focus: {
                 _id: targetId,
                 model,
@@ -129,20 +129,20 @@ export function addChild(previousChild, newChildValue, sequenceAfterPreviousChil
             type
         }
         dispatch({
-            type: 'CREATE_NOVEL_MODEL',
+            type: 'create_app_model',
             create: {
                 newModel
             }
         });
         dispatch({
-            type: 'TRANSFER_NOVEL_MODEL',
+            type: 'transfer_app_model',
             transfer: {
                 currentParentId: previousChild._id,
                 newParentId: newId
             }
         });
         dispatch({
-            type: 'FOCUS_NOVEL_MODEL',
+            type: 'focus_app_model',
             focus: {
                 _id: newId,
                 model: newModel,
@@ -164,7 +164,7 @@ export function mergeWithPreviousSibling(model) {
         if (previousSibling) {
             if (model.title !== '') {
                 dispatch({
-                    type: 'UPDATE_NOVEL_MODEL',
+                    type: 'update_app_model',
                     update: {
                         _id: previousSibling._id,
                         changes: {
@@ -174,7 +174,7 @@ export function mergeWithPreviousSibling(model) {
                 });
                 // Place cursor at start of merged value
                 dispatch({
-                    type: 'FOCUS_NOVEL_MODEL',
+                    type: 'focus_app_model',
                     focus: {
                         _id: previousSibling._id,
                         model: previousSibling,
@@ -185,7 +185,7 @@ export function mergeWithPreviousSibling(model) {
             }
             if (modelChildren && modelChildren.length > 0) {
                 dispatch({
-                    type: 'TRANSFER_NOVEL_MODEL',
+                    type: 'transfer_app_model',
                     transfer: {
                         currentParentId: model._id,
                         newParentId: previousSibling._id
@@ -195,7 +195,7 @@ export function mergeWithPreviousSibling(model) {
         }
 
         dispatch({
-            type: 'REMOVE_NOVEL_MODEL',
+            type: 'remove_app_model',
             remove: {
                 _id: model._id
             }
@@ -218,7 +218,7 @@ export function moveToPrevious(model) {
         if (!focusModel) return;  // No where else to go.
 
         dispatch({
-            type: 'FOCUS_NOVEL_MODEL',
+            type: 'focus_app_model',
             focus: {
                 _id: focusModel._id,
                 model: focusModel,
@@ -252,7 +252,7 @@ export function moveToNext(model) {
             }
         }
         dispatch({
-            type: 'FOCUS_NOVEL_MODEL',
+            type: 'focus_app_model',
             focus: {
                 _id: focusId,
                 model: focusModel,
@@ -266,7 +266,7 @@ export function moveToNext(model) {
 export function focus(model, selectionStart=0, selectionEnd=0){
     return function(dispatch, getState) {
         dispatch({
-            type: 'FOCUS_NOVEL_MODEL',
+            type: 'focus_app_model',
             focus: {
                 _id: model._id,
                 model,

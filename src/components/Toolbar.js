@@ -122,7 +122,7 @@ class Toolbar extends React.Component {
 
 function mapStateToProps(state, ownProps) {
     const ormData = state.orm;
-    const rootModelId = get(state, 'NOVEL_MODEL.rootModelId')
+    const rootModelId = get(state, 'app_model.rootModelId')
     return { ormData, rootModelId };
 }
 

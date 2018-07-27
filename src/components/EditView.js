@@ -2,27 +2,35 @@ import React from 'react';
 import './editView.css';
 import {connect} from 'react-redux';
 import {get} from 'lodash';
-import Chapter from './NovelChapterView';
-import Event from './NovelEventView';
-import Summary from './NovelSummaryView';
+import config from '../config';
 
 class EditView extends React.Component {
     render() {
         const {model} = this.props;
-        return <div className='edit-view'>
-            {(!model || !model.type) && <div>Select a node.</div>}
-            {model && model.type === 'summary' && <Summary model={model}></Summary>}
-            {model && model.type === 'chapter' && <Chapter model={model}></Chapter>}
-            {model && model.type === 'event' && <Event model={model}></Event>}
-        </div>;
+        let toRender = <div>Select a node.</div>;
+        if (model || model.type) {
+            let ViewType = require('./' + getViewNameForModelType(model.type));
+            if (ViewType.default) {
+                ViewType = ViewType.default;
+            }
+            toRender = (<div className='edit-view'>
+                <ViewType model={model}></ViewType>
+            </div>);
+        }
+        return toRender;
     }
 }
 
 function mapStateToProps(state, ownProps){
-    let model = get(state, 'NOVEL_MODEL.model');
+    let model = get(state, 'app_model.model');
     return {
         model
     };
 }
 
 export default connect(mapStateToProps)(EditView);
+
+function getViewNameForModelType(type){
+    const dataType = config.dataTypes.find(dt=>dt.title === type);
+    return dataType.view;
+}

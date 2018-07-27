@@ -2,3 +2,7 @@
     background-color: black;
     margin: .5em 0 .5em 0;
 }
+
+Form .ql-container.ql-snow {
+    border-color: #ccc;
+}

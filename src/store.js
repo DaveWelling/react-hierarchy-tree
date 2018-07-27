@@ -20,7 +20,7 @@ const initialNovelModelState = getInitialNovelModelState(rootModelId, initialOrm
 // add other reducers as properties beside 'orm'
 const appReducer = combineReducers({
     orm: createReducer(orm),
-    NOVEL_MODEL: getModelReducer(initialNovelModelState)
+    app_model: getModelReducer(initialNovelModelState)
 });
 
 const rootReducer = (state, action) => {
@@ -61,7 +61,7 @@ function getEmptyState(){
 
     return {
         ...ormState,
-        NOVEL_MODEL: getInitialNovelModelState(rootModelId, ormState)
+        app_model: getInitialNovelModelState(rootModelId, ormState)
     };
 }
 
@@ -69,7 +69,7 @@ function getImportedState(action) {
     const rootModelId = action.import.data.rootModelId;
     return {
         orm: action.import.data.orm,
-        NOVEL_MODEL: {
+        app_model: {
             rootModelId
         }
     };

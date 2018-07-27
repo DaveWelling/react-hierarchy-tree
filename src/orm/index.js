@@ -1,11 +1,8 @@
 import {ORM} from 'redux-orm';
-import Model from './model/NovelModel';
-import Chapter from './model/NovelChapter';
-import Event from './model/NovelEvent';
-import Summary from './model/NovelSummary';
+import Model from './model/Model';
 
 export const orm = new ORM();
 
-orm.register(Model, Chapter, Event, Summary);
+orm.register(Model);
 
 export default orm;

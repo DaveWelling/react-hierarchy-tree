@@ -50,7 +50,7 @@ class TreeNode extends React.Component {
             // call this function on every dragend event
             onend: function(e) {
                 dispatch({
-                    type: 'DRAG_NOVEL_MODEL_END',
+                    type: 'drag_app_model_end',
                     drag: {
                         model: that.props.data
                     }
@@ -58,7 +58,7 @@ class TreeNode extends React.Component {
             },
             onstart: function(e) {
                 dispatch({
-                    type: 'DRAG_NOVEL_MODEL_START',
+                    type: 'drag_app_model_start',
                     drag: {
                         model: that.props.data
                     }
@@ -224,7 +224,7 @@ class TreeNode extends React.Component {
             data: { _id }
         } = this.props;
         dispatch({
-            type: 'UPDATE_NOVEL_MODEL',
+            type: 'update_app_model',
             update: {
                 _id,
                 changes: {
@@ -241,7 +241,7 @@ class TreeNode extends React.Component {
             data: { _id }
         } = this.props;
         dispatch({
-            type: 'UPDATE_NOVEL_MODEL',
+            type: 'update_app_model',
             update: {
                 _id,
                 changes: {
@@ -341,7 +341,7 @@ function mapStateToProps(state, ownProps) {
     // Get children of this node and sort by sequence property
     const childrenData = childrenForParentId(state, ownProps.data._id).sort((a, b) => a.sequence - b.sequence);
     const collapsed = isCollapsed(state, ownProps.data._id);
-    const dragging = get(state, 'NOVEL_MODEL.dragging', false);
+    const dragging = get(state, 'app_model.dragging', false);
     return {
         childrenData,
         collapsed,

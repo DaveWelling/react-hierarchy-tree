@@ -1,29 +1,49 @@
 import React from 'react';
-import './editView.css';
+import Quill from 'quill';
 import {connect} from 'react-redux';
-import {getNovelEvent} from '../orm/selector/novelEventSelectors';
-import RichText from './RichText';
+import {getModelRef} from '../orm/selector/modelSelectors';
 import DatePicker from 'react-datepicker';
+import {debounce} from 'lodash'
 import moment from 'moment';
-import './novelEventView.css';
+import './editView.css';
+import './eventView.css';
+import './quill-editor.css';
 import 'react-datepicker/dist/react-datepicker.css';
-
-class NovelEventView extends React.Component {
+class EventView extends React.Component {
     constructor(props){
         super(props);
         this.onChange = this.onChange.bind(this);
+        this.onChangeDebounced = debounce(this.onChange, 1000);
+    }
+    componentDidMount(){
+        const text = this.props.model ? this.props.model.text : undefined;
+        const quill = this.quill = new Quill(`#formTextView_${this.props.model._id}`, {
+            modules: {
+                history: {
+                  delay: 2000,
+                  maxStack: 500,
+                  userOnly: true
+                }
+              },
+            theme: 'snow'
+        });
+        quill.setContents(text, 'silent');
+        const {onChangeDebounced} = this;
+        quill.on('text-change', function() {
+            onChangeDebounced(quill);
+        });
     }
     onChange(e){
         const {isNew, dispatch, model:{_id}} = this.props;
-        let {timing, description} = this.props.novelEvent;
+        let {timing, description} = this.props.model;
         if (e instanceof moment) {
             timing = e;
         } else {
-            description = e.target.value;
+            description = e.getContents();
         }
         if (isNew) {
             dispatch({
-                type: 'CREATE_NOVEL_EVENT',
+                type: 'create_app_model',
                 create: {
                     newEvent: {
                         _id,
@@ -34,7 +54,7 @@ class NovelEventView extends React.Component {
             });
         } else {
             dispatch({
-                type: 'UPDATE_NOVEL_EVENT',
+                type: 'update_app_model',
                 update: {
                     _id,
                     changes: {
@@ -46,13 +66,7 @@ class NovelEventView extends React.Component {
         }
     }
     render() {
-        let {description, timing} = this.props.novelEvent;
-        const meta = {
-            id: 'rt_' + this.props.model._id,
-            propertyName: 'richtext',
-            mentionNamespace: 'novel',
-            mentionRelation: 'event'
-        };
+        let {description, timing} = this.props.model;
 
         const {onChange} = this;
         timing = timing || moment();
@@ -65,18 +79,19 @@ class NovelEventView extends React.Component {
                 timeIntervals={15}
                 dateFormat="LLL"
                 timeCaption="time"/>
-            <RichText className="form-rich-text" hNode={meta} onchange={onChange} value={description}></RichText>
+            <div id={'formTextView_' + this.props.model._id} />
         </form>;
     }
 }
 
 function mapStateToProps(state, ownProps){
-    let novelEvent = getNovelEvent(state, ownProps.model._id);
+    let model = getModelRef(state, ownProps.model._id);
+
     return {
-        isNew: !novelEvent,
-        novelEvent: novelEvent || {}
+        isNew: !model,
+        model
     };
 }
 
 
-export default connect(mapStateToProps)(NovelEventView);
+export default connect(mapStateToProps)(EventView);

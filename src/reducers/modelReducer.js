@@ -2,7 +2,7 @@
 export default function getModelReducer(initialNovelModelState) {
     return function ModelReducer(state=initialNovelModelState, action){
         switch (action.type) {
-            case 'FOCUS_NOVEL_MODEL':
+            case 'focus_app_model':
                 return {
                     ...state,
                     selectedId: action.focus._id,
@@ -11,9 +11,9 @@ export default function getModelReducer(initialNovelModelState) {
                     selectionEnd: action.focus.selectionEnd
                 }
                 break;
-            case 'DRAG_NOVEL_MODEL_START':
+            case 'drag_app_model_start':
                 return {...state, dragging: action.drag.model};
-            case 'DRAG_NOVEL_MODEL_END':
+            case 'drag_app_model_end':
                 return {...state, dragging: undefined};
         }
         return state;
