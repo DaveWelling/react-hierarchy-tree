@@ -2,6 +2,8 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { getModelRef } from '../orm/selector/modelSelectors';
 import { makeChildOfPreviousSibling, addChild, makeSiblingOfParent, mergeWithPreviousSibling, moveToPrevious, moveToNext, focus } from '../actions/modelActions';
+import {get} from 'lodash';
+import EditableShell from './EditableShell';
 
 import './treeText.css';
 class TreeText extends React.Component {
@@ -9,7 +11,6 @@ class TreeText extends React.Component {
         super(props);
         this.onChange = this.onChange.bind(this);
         this.onSelect = this.onSelect.bind(this);
-        this.onKeyPress = this.onKeyPress.bind(this);
         this.onKeyDown = this.onKeyDown.bind(this);
         this.addSibling = this.addSibling.bind(this);
         this.focusIfNecessary = this.focusIfNecessary.bind(this);
@@ -45,6 +46,7 @@ class TreeText extends React.Component {
     }
 
     focusIfNecessary() {
+        if (!this.inputRef) return;
         let {model: {ui: {selectionStart, selectionEnd}}} = this.props;
         if (typeof selectionStart !== 'undefined') {
             this.inputRef.focus();
@@ -65,6 +67,13 @@ class TreeText extends React.Component {
 
     onKeyDown(e) {
         switch (e.keyCode) {
+            case 13: // Enter
+                const { addSibling } = this;
+                const offset = e.target.selectionStart;
+                setImmediate(function() { // setImmediate is necessary.  Event must finish before dispatch.
+                    addSibling(offset);
+                });
+                e.preventDefault();
             case 38: { // Arrow up
                 let {model, dispatch} = this.props;
                 dispatch(moveToPrevious(model));
@@ -103,19 +112,6 @@ class TreeText extends React.Component {
         }
     }
 
-    onKeyPress(e) {
-        const { addSibling } = this;
-        const offset = e.target.selectionStart;
-        switch (e.charCode) {
-            case 13: // Enter
-                setImmediate(function() { // setImmediate is necessary.  Event must finish before dispatch.
-                    addSibling(offset);
-                });
-                e.preventDefault();
-            default:
-                break;
-        }
-    }
 
     addSibling(cursorPosition) {
         const {value, model, nextSequence, onValueChange, dispatch} = this.props;
@@ -131,21 +127,18 @@ class TreeText extends React.Component {
 
     render() {
         const { onChange, onKeyPress, onKeyDown, onSelect } = this;
-        return (
-            <input
-                ref={input => {
-                    this.inputRef = input;
-                }}
-                id={this.props.id}
-                type="textbox"
-                className="tree-text"
-                value={this.props.model.title}
-                onKeyPress={onKeyPress}
-                onKeyDown={onKeyDown}
-                onChange={onChange}
-                onSelect={onSelect}
-            />
-        );
+        const { isSelected } = this.props;
+        return <EditableShell
+                    ref={input => {
+                        this.inputRef = input;
+                    }}
+                    id={this.props.id}
+                    type="textbox"
+                    className="tree-text"
+                    value={this.props.model.title}
+                    onKeyDown={onKeyDown}
+                    onChange={onChange}
+                />;
     }
 }
 
@@ -153,9 +146,11 @@ function mapStateToProps(state, props) {
     const {_id} = props;
     const model = getModelRef(state, _id);
     const id = 'text' + _id;
+    const selectedId = get(state, 'NOVEL_MODEL.selectedId');
+    const isSelected = (selectedId === _id);
 
 
-    return { id, model };
+    return { id, model, isSelected };
 }
 
 export default connect(

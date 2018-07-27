@@ -1,10 +1,22 @@
 .tree-text {
-    /* margin: .2em 0 .2em 0; */
     border: none;
     width: 100%;
     color: white;
     background-color: black;
-    padding-left: .2em;
+    padding: .1em .25em .1em .25em;
+    font-size: medium;
+    cursor: text;
+    border: thin transparent solid;
+    line-height: 1.1em;
+}
+.tree-text:hover {
+    border: thin lightgray solid;
+    border-radius: 3px;
+}
+
+.unselected-tree-text {
+    vertical-align: middle;
+    margin: .5em 0 .5em 0;
 }
 /* .tree-text:hover {
     border: thin black solid;

@@ -17,7 +17,6 @@
     margin: 0 .25em;
 }
 .tree-view-text {
-    margin: .25em .25em .25em 0;
     flex-grow: 1;
     display:flex;
     flex-direction: row;
@@ -30,7 +29,8 @@
 
 
 .tree-view_arrow {
-    width: 1.5em;
+    color: black;
+    /* width: 1.5em;
     height: 1.5em;
     cursor: pointer;
     display: inline-block;
@@ -38,37 +38,31 @@
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    font-size: x-large;
+    padding: 0 .1em;
+    line-height: 1em; */
 }
-.tree-view_arrow:after {
+/* .tree-view_arrow:after {
     font-size: x-large;
     content: '▾';
     padding: 0 .1em;
     line-height: 1em;
-
+} */
+.tree-view_arrow:hover {
+    color: white;
 }
 
 .tree-view_spacer {
-    min-width: 1.5em;
+    min-width: 1em;
     display: inline-block;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-}
-.tree-view_spacer:after {
     font-size: x-large;
     white-space: pre;
-    content: ' ';
 }
 
-
-/* rotate the triangle to close it */
-.tree-view_arrow-collapsed {
-    -webkit-transform: rotate(-90deg);
-    -moz-transform: rotate(-90deg);
-    -ms-transform: rotate(-90deg);
-    transform: rotate(-90deg);
-}
 .tree-node-grab {
     font-size: 18px;
     margin: .25em 0 ;

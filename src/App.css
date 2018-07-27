@@ -21,9 +21,9 @@ select {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  padding: .5em 1.5em .5em .5em;
+  padding: .25em 1.5em .25em .5em;
   border-radius: 3px;
-  font-size: 1em;
+  font-size: small;
   color: lightslategray;
   background: black;
   border-color: lightslategray;
@@ -38,7 +38,7 @@ select {
 .select-container:after {
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
-    top: .8em;
+    top: .6em;
     right: .55em;
     border-top: 9px solid lightslategray;
 }

@@ -257,14 +257,13 @@ class TreeNode extends React.Component {
         that.childrenTryExpands = [];
         let { nextSequence, label, useIcons, onClick, childrenData, data, value, collapsed, dragging } = this.props;
         const dropZoneClass = dragging && dragging._id !== data._id ? 'drop-zone-dragging' : 'drop-zone';
-        let arrowClassName = 'tree-view_arrow';
         let containerClassName = 'tree-view_children';
         if (collapsed) {
-            arrowClassName += ' tree-view_arrow-collapsed';
             containerClassName += ' tree-view_children-collapsed';
         }
 
-        const Arrow = <div className={arrowClassName} onClick={this.handleArrowClick} />;
+        const ArrowRight = <div onClick={this.handleArrowClick} ><i className="material-icons tree-view_arrow">arrow_right</i></div>;
+        const ArrowDown = <div onClick={this.handleArrowClick} ><i className="material-icons tree-view_arrow">arrow_drop_down</i></div>;
         let iconClass = getIconClass(data);
         const getChildCollapseFunctions = function(connectedChild) {
             if (connectedChild === null) return; // ignore detach of ref
@@ -280,7 +279,8 @@ class TreeNode extends React.Component {
                 onWheel={this.handleWheel}
             >
                 <div id={'drag_' + data._id} className="tree-view-item-top draggable">
-                    {childrenData && !!childrenData.length && Arrow}
+                    {childrenData && !!childrenData.length && collapsed && ArrowRight}
+                    {childrenData && !!childrenData.length && !collapsed && ArrowDown}
                     {(!childrenData || !childrenData.length) && <span className="tree-view_spacer" />}
                     {useIcons && <span className={'tree-node-icon ' + iconClass} />}
                     <div className="drag-handle">
