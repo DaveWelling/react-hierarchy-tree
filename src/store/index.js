@@ -1,8 +1,8 @@
 import bootstrap from './orm/bootstrap';
-import orm from './orm';
-import getModelReducer from './reducers/modelReducer';
+import orm from '../orm';
+import getModelReducer from '../reducers/modelReducer';
 import thunk from 'redux-thunk';
-import config from './config';
+import config from '../config';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web and AsyncStorage for react-native
 import { createStore, combineReducers, applyMiddleware, compose } from 'redux';
@@ -15,19 +15,19 @@ import cuid from 'cuid';
 const rootModelId = config.rootModelId || cuid();
 const initialOrmState = bootstrap(orm, rootModelId);
 
-const initialNovelModelState = getInitialNovelModelState(rootModelId, initialOrmState);
+const initialProjectModelState = getInitialAppModelState(rootModelId, initialOrmState);
 
 // add other reducers as properties beside 'orm'
 const appReducer = combineReducers({
     orm: createReducer(orm),
-    app_model: getModelReducer(initialNovelModelState)
+    project_model: getModelReducer(initialProjectModelState)
 });
 
 const rootReducer = (state, action) => {
-    if (action.type === 'IMPORT_NOVEL') {
+    if (action.type === 'import_app') {
         state = getImportedState(action);
     }
-    if (action.type === 'CLEAR_NOVEL') {
+    if (action.type === 'clear_app') {
         state = getEmptyState();
     }
     return appReducer(state, action);
@@ -61,7 +61,7 @@ function getEmptyState(){
 
     return {
         ...ormState,
-        app_model: getInitialNovelModelState(rootModelId, ormState)
+        project_model: getInitialAppModelState(rootModelId, ormState)
     };
 }
 
@@ -69,13 +69,13 @@ function getImportedState(action) {
     const rootModelId = action.import.data.rootModelId;
     return {
         orm: action.import.data.orm,
-        app_model: {
+        project_model: {
             rootModelId
         }
     };
 }
 
-function getInitialNovelModelState(rootModelId, initialOrmState) {
+function getInitialAppModelState(rootModelId, initialOrmState) {
     const defaultFocusModel = Object.values(initialOrmState.orm.Model.itemsById).find(m=>m.parent===rootModelId && m.title==='');
     return {
         rootModelId,

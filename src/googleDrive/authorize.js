@@ -5,7 +5,7 @@ export default function authorize() {
     return new Promise((resolve, reject)=>{
         if (authorized) resolve();
 
-        if (!window.googleApiLoadedForNovel) {
+        if (!window.googleApiLoadedForProject) {
             reject("Google API hasn't loaded yet, try again later.");
             return;
         }

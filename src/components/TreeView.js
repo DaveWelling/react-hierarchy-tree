@@ -28,7 +28,7 @@ export class TreeView extends React.Component {
 function mapStateToProps(state, ownProps) {
     // Get root nodes and sort by sequence property
 
-    const rootModelId = get(state, 'app_model.rootModelId')
+    const rootModelId = get(state, 'project_model.rootModelId')
     let childrenData = childrenForParentId(state, rootModelId)
         .sort((a,b)=> a.sequence-b.sequence);
     return {

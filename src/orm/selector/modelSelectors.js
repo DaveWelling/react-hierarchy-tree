@@ -33,7 +33,7 @@ export const childrenForParentId = createSelector(
 
 export const getModelRef = (state, _id)=> state.Model ? state.Model.itemsById[_id] : state.orm.Model.itemsById[_id];
 
-const parentIdSelector = (state, _id) => getModelRef(state, _id).parent;
+export const parentIdSelector = (state, _id) => getModelRef(state, _id).parent;
 
 export const isCollapsed = createSelector(
     getModelRef,

@@ -8,21 +8,21 @@ export class Model extends ValidatingModel{
     static reducer(action, Model, session) {
         const { type } = action;
         switch (type) {
-            case 'create_app_model':
+            case 'create_project_model':
                 let newModel = Model.create(action.create.newModel);
                 break;
-            case 'update_app_model':
+            case 'update_project_model':
                 const { update:{changes}} = action;
                 Model.withId(action.update._id).update(changes);
                 break;
-            case 'remove_app_model':
+            case 'remove_project_model':
                 Model.withId(action.remove._id).delete();
                 break;
-            case 'transfer_app_model':
+            case 'transfer_project_model':
                 const { transfer:{currentParentId, newParentId}} = action;
                 Model.withId(currentParentId).children.update({parent:newParentId});
                 break;
-            case 'resequence_app_model':
+            case 'resequence_project_model':
                 const {_id, parentId, position} = action.resequence;
                 const children = Model.withId(parentId).children;
                 let newSequence;
@@ -37,7 +37,7 @@ export class Model extends ValidatingModel{
 
         // UI actions
         switch (type) {
-            case 'drag_app_model_start': {
+            case 'drag_project_model_start': {
                 const model = Model.withId(action.drag.model._id);
                 model.update({
                     ui: {
@@ -47,7 +47,7 @@ export class Model extends ValidatingModel{
                 });
                 break;
             }
-            case 'drag_app_model_end': {
+            case 'drag_project_model_end': {
                 const model = Model.withId(action.drag.model._id);
                 model.update({
                     ui: {
@@ -56,22 +56,22 @@ export class Model extends ValidatingModel{
                 });
                 break;
             }
-            case 'toggleCollapse_novel_model': {
+            case 'toggleCollapse_project_model': {
                 const model = Model.withId(action.toggleCollapse._id);
                 model.update({ui: {collapsed: !model.ui.collapsed}});
                 break;
             }
-            case 'expand_novel_model': {
+            case 'expand_project_model': {
                 const model = Model.withId(action.expand._id);
                 model.update({ui: {collapsed: false}});
                 break;
             }
-            case 'collapse_novel_model': {
+            case 'collapse_project_model': {
                 const model = Model.withId(action.collapse._id);
                 model.update({ui: {collapsed: true}});
                 break;
             }
-            case 'ensureExpanded_app_model': {
+            case 'ensureExpanded_project_model': {
                 const model = Model.withId(action.ensureExpanded._id);
                 function expandToRoot(expandingModel){
                     expandingModel.ui.collapsed = false;
@@ -80,12 +80,6 @@ export class Model extends ValidatingModel{
                     }
                 }
                 if (model.parent) expandToRoot(model.parent);
-                break;
-            }
-            case 'focus_app_model': {
-                const {_id, selectionStart, selectionEnd} = action.focus;
-                const model = Model.withId(_id);
-                model.update({ui: {...model.ui, selectionStart, selectionEnd}})
                 break;
             }
         }

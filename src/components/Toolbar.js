@@ -39,7 +39,7 @@ class Toolbar extends React.Component {
             let ormData = JSON.parse(e.target.result);
             persistor.purge();
             dispatch({
-                type: 'IMPORT_NOVEL',
+                type: 'import_app',
                 import: {data: ormData}
             });
         };
@@ -59,7 +59,7 @@ class Toolbar extends React.Component {
         let a = document.createElement('a');
         let url = URL.createObjectURL(blob);
         a.href = url;
-        a.download = 'novel.json';
+        a.download = this.props.projectName + '.json';
         document.body.appendChild(a);
         a.click();
         /* istanbul ignore next */
@@ -76,13 +76,13 @@ class Toolbar extends React.Component {
             orm: this.props.ormData,
             rootModelId: this.props.rootModelId
         };
-        saveGoogleDriveFile(exportData);
+        saveGoogleDriveFile(exportData,this.props.projectName);
     }
     open() {
-        openGoogleDriveFile().then(data=>{
+        openGoogleDriveFile(this.props.projectName).then(data=>{
             persistor.purge();
             this.props.dispatch({
-                type: 'IMPORT_NOVEL',
+                type: 'import_app',
                 import: {data}
             });
         });
@@ -122,8 +122,9 @@ class Toolbar extends React.Component {
 
 function mapStateToProps(state, ownProps) {
     const ormData = state.orm;
-    const rootModelId = get(state, 'app_model.rootModelId')
-    return { ormData, rootModelId };
+    const rootModelId = get(state, 'project_model.rootModelId')
+    const projectName = get(state, 'project_model.name');
+    return { ormData, rootModelId, projectName };
 }
 
 export default connect(mapStateToProps)(Toolbar);

@@ -50,7 +50,7 @@ class TreeNode extends React.Component {
             // call this function on every dragend event
             onend: function(e) {
                 dispatch({
-                    type: 'drag_app_model_end',
+                    type: 'drag_project_model_end',
                     drag: {
                         model: that.props.data
                     }
@@ -58,7 +58,7 @@ class TreeNode extends React.Component {
             },
             onstart: function(e) {
                 dispatch({
-                    type: 'drag_app_model_start',
+                    type: 'drag_project_model_start',
                     drag: {
                         model: that.props.data
                     }
@@ -118,7 +118,6 @@ class TreeNode extends React.Component {
             ondrop: function (e) {
                 var dropzoneElement = e.target;
                 dropzoneElement.classList.remove('can-drop');
-                console.log('dropped: ', e.draggable.target);
                 let draggedModelId = e.draggable.target.split('_')[1];
                 dispatch(makeNextSiblingOfModel(draggedModelId, that.props.data));
             }
@@ -151,7 +150,7 @@ class TreeNode extends React.Component {
 
     toggleCollapse() {
         this.props.dispatch({
-            type: 'toggleCollapse_novel_model',
+            type: 'toggleCollapse_project_model',
             toggleCollapse: {
                 _id: this.props.data._id
             }
@@ -176,7 +175,7 @@ class TreeNode extends React.Component {
         // To expand, must be collapsed and have something (other than _meta) inside
         if (this.props.collapsed && Object.keys(this.props.childrenData).length > 1) {
             this.props.dispatch({
-                type: 'expand_novel_model',
+                type: 'expand_project_model',
                 expand: {
                     _id: this.props.data._id
                 }
@@ -192,7 +191,7 @@ class TreeNode extends React.Component {
         } else {
             if (!this.tryChildCollapse()) {
                 this.props.dispatch({
-                    type: 'collapse_novel_model',
+                    type: 'collapse_project_model',
                     collapse: {
                         _id: this.props.data._id
                     }
@@ -224,7 +223,7 @@ class TreeNode extends React.Component {
             data: { _id }
         } = this.props;
         dispatch({
-            type: 'update_app_model',
+            type: 'update_project_model',
             update: {
                 _id,
                 changes: {
@@ -232,7 +231,10 @@ class TreeNode extends React.Component {
                 }
             }
         });
-        dispatch(focus(this.props.data));
+        dispatch(focus({
+            ...this.props.data,
+            type: newType.target.value
+        }));
 
     }
     onValueChange(newValue) {
@@ -241,7 +243,7 @@ class TreeNode extends React.Component {
             data: { _id }
         } = this.props;
         dispatch({
-            type: 'update_app_model',
+            type: 'update_project_model',
             update: {
                 _id,
                 changes: {
@@ -341,7 +343,7 @@ function mapStateToProps(state, ownProps) {
     // Get children of this node and sort by sequence property
     const childrenData = childrenForParentId(state, ownProps.data._id).sort((a, b) => a.sequence - b.sequence);
     const collapsed = isCollapsed(state, ownProps.data._id);
-    const dragging = get(state, 'app_model.dragging', false);
+    const dragging = get(state, 'project_model.dragging', false);
     return {
         childrenData,
         collapsed,

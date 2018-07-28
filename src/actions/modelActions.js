@@ -11,7 +11,7 @@ export function makeChildOfPreviousSibling(_id, selectionStart, selectionEnd) {
         const previousSiblingData = getPreviousSibling(state, _id);
         if (!previousSiblingData) return; // first sibling cannot be indented further
         dispatch({
-            type: 'update_app_model',
+            type: 'update_project_model',
             update: {
                 _id,
                 changes: {
@@ -20,7 +20,7 @@ export function makeChildOfPreviousSibling(_id, selectionStart, selectionEnd) {
             }
         });
         dispatch({
-            type: 'resequence_app_model',
+            type: 'resequence_project_model',
             resequence: {
                 _id,
                 parentId: previousSiblingData._id,
@@ -28,18 +28,16 @@ export function makeChildOfPreviousSibling(_id, selectionStart, selectionEnd) {
             }
         });
         dispatch({
-            type: 'ensureExpanded_app_model',
+            type: 'ensureExpanded_project_model',
             ensureExpanded: {
                 _id
             }
         });
         dispatch({
-            type: 'focus_app_model',
+            type: 'focus_project_model',
             focus: {
                 _id,
-                model,
-                selectionStart,
-                selectionEnd
+                model
             }
         });
     }
@@ -60,7 +58,7 @@ export function makeSiblingOfParent(model, selectionStart, selectionEnd) {
             ? previousParent.sequence + (sequenceAfterPreviousParent - previousParent.sequence) / 2
             : previousParent.sequence + 1;
         dispatch({
-            type: 'update_app_model',
+            type: 'update_project_model',
             update: {
                 _id,
                 changes: {
@@ -70,12 +68,10 @@ export function makeSiblingOfParent(model, selectionStart, selectionEnd) {
             }
         });
         dispatch({
-            type: 'focus_app_model',
+            type: 'focus_project_model',
             focus: {
                 _id,
-                model,
-                selectionStart,
-                selectionEnd
+                model
             }
         });
     }
@@ -92,7 +88,7 @@ export function makeNextSiblingOfModel(targetId, siblingModel) {
             ? siblingModel.sequence + (sequenceAfterSiblingModel - siblingModel.sequence) / 2
             : siblingModel.sequence + 1;
         dispatch({
-            type: 'update_app_model',
+            type: 'update_project_model',
             update: {
                 _id: targetId,
                 changes: {
@@ -102,12 +98,10 @@ export function makeNextSiblingOfModel(targetId, siblingModel) {
             }
         });
         dispatch({
-            type: 'focus_app_model',
+            type: 'focus_project_model',
             focus: {
                 _id: targetId,
-                model,
-                selectionStart: 0,
-                selectionEnd: 0
+                model
             }
         });
     }
@@ -129,25 +123,23 @@ export function addChild(previousChild, newChildValue, sequenceAfterPreviousChil
             type
         }
         dispatch({
-            type: 'create_app_model',
+            type: 'create_project_model',
             create: {
                 newModel
             }
         });
         dispatch({
-            type: 'transfer_app_model',
+            type: 'transfer_project_model',
             transfer: {
                 currentParentId: previousChild._id,
                 newParentId: newId
             }
         });
         dispatch({
-            type: 'focus_app_model',
+            type: 'focus_project_model',
             focus: {
                 _id: newId,
-                model: newModel,
-                selectionStart: 0,
-                selectionEnd: 0
+                model: newModel
             }
         });
     }
@@ -164,7 +156,7 @@ export function mergeWithPreviousSibling(model) {
         if (previousSibling) {
             if (model.title !== '') {
                 dispatch({
-                    type: 'update_app_model',
+                    type: 'update_project_model',
                     update: {
                         _id: previousSibling._id,
                         changes: {
@@ -174,7 +166,7 @@ export function mergeWithPreviousSibling(model) {
                 });
                 // Place cursor at start of merged value
                 dispatch({
-                    type: 'focus_app_model',
+                    type: 'focus_project_model',
                     focus: {
                         _id: previousSibling._id,
                         model: previousSibling,
@@ -185,7 +177,7 @@ export function mergeWithPreviousSibling(model) {
             }
             if (modelChildren && modelChildren.length > 0) {
                 dispatch({
-                    type: 'transfer_app_model',
+                    type: 'transfer_project_model',
                     transfer: {
                         currentParentId: model._id,
                         newParentId: previousSibling._id
@@ -195,7 +187,7 @@ export function mergeWithPreviousSibling(model) {
         }
 
         dispatch({
-            type: 'remove_app_model',
+            type: 'remove_project_model',
             remove: {
                 _id: model._id
             }
@@ -218,12 +210,10 @@ export function moveToPrevious(model) {
         if (!focusModel) return;  // No where else to go.
 
         dispatch({
-            type: 'focus_app_model',
+            type: 'focus_project_model',
             focus: {
                 _id: focusModel._id,
-                model: focusModel,
-                selectionStart: 0,
-                selectionEnd: 0
+                model: focusModel
             }
         });
     }
@@ -252,26 +242,22 @@ export function moveToNext(model) {
             }
         }
         dispatch({
-            type: 'focus_app_model',
+            type: 'focus_project_model',
             focus: {
                 _id: focusId,
-                model: focusModel,
-                selectionStart: 0,
-                selectionEnd: 0
+                model: focusModel
             }
         });
     }
 }
 
-export function focus(model, selectionStart=0, selectionEnd=0){
+export function focus(model){
     return function(dispatch, getState) {
         dispatch({
-            type: 'focus_app_model',
+            type: 'focus_project_model',
             focus: {
                 _id: model._id,
-                model,
-                selectionStart,
-                selectionEnd
+                model
             }
         });
     }

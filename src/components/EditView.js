@@ -5,16 +5,33 @@ import {get} from 'lodash';
 import config from '../config';
 
 class EditView extends React.Component {
+    constructor(props) {
+        super(props);
+        this.onChange = this.onChange.bind(this);
+    }
+
+    onChange(changes){
+        const {dispatch, model:{_id}} = this.props;
+
+        dispatch({
+            type: 'update_project_model',
+            update: {
+                _id,
+                changes
+            }
+        });
+    }
     render() {
         const {model} = this.props;
+        const {onChange} = this;
         let toRender = <div>Select a node.</div>;
-        if (model || model.type) {
+        if (model && model.type) {
             let ViewType = require('./' + getViewNameForModelType(model.type));
             if (ViewType.default) {
                 ViewType = ViewType.default;
             }
             toRender = (<div className='edit-view'>
-                <ViewType model={model}></ViewType>
+                <ViewType model={model} onChange={onChange}></ViewType>
             </div>);
         }
         return toRender;
@@ -22,7 +39,7 @@ class EditView extends React.Component {
 }
 
 function mapStateToProps(state, ownProps){
-    let model = get(state, 'app_model.model');
+    let model = get(state, 'project_model.model');
     return {
         model
     };

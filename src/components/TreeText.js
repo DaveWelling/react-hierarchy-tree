@@ -10,11 +10,10 @@ class TreeText extends React.Component {
     constructor(props) {
         super(props);
         this.onChange = this.onChange.bind(this);
-        this.onSelect = this.onSelect.bind(this);
         this.onKeyDown = this.onKeyDown.bind(this);
         this.addSibling = this.addSibling.bind(this);
+        this.onFocus = this.onFocus.bind(this);
         this.focusIfNecessary = this.focusIfNecessary.bind(this);
-        this.removeSelectionFromState = this.removeSelectionFromState.bind(this);
     }
 
     componentDidMount() {
@@ -23,38 +22,16 @@ class TreeText extends React.Component {
     componentDidUpdate() {
         this.focusIfNecessary();
     }
-    componentWillUnmount() {
-        if (this.unsubscribe) {
-            this.unsubscribe();
-        }
-    }
-
-    removeSelectionFromState() {
-        this.props.dispatch({
-            type: 'update_app_model',
-            update: {
-                _id: this.props._id,
-                changes: {
-                    ui: {
-                        ...this.props.model.ui,
-                        selectionStart: undefined,
-                        selectionEnd: undefined
-                    }
-                }
-            }
-        });
-    }
 
     focusIfNecessary() {
         if (!this.inputRef) return;
-        let {model: {ui: {selectionStart, selectionEnd}}} = this.props;
-        if (typeof selectionStart !== 'undefined') {
+        let {isSelected, model: {ui: {selectionStart, selectionEnd}}} = this.props;
+        if (isSelected &&  document.activeElement !== this.inputRef.domElementRef) {
             this.inputRef.focus();
-            if (typeof selectionEnd === 'undefined') {
-                selectionEnd = selectionStart;
+            if (typeof selectionStart !== 'undefined') {
+                selectionEnd = selectionEnd || selectionStart;
+                this.inputRef.setSelectionRange(selectionStart, selectionEnd);
             }
-            this.inputRef.setSelectionRange(selectionStart, selectionEnd);
-            this.removeSelectionFromState()
         }
     }
 
@@ -118,16 +95,12 @@ class TreeText extends React.Component {
         dispatch(addChild(model, siblingValue, nextSequence, model.type));
     }
 
-    onSelect(e) {
-        this.props.dispatch(focus(this.props.model, e.target.selectionStart, e.target.selectionEnd));
-    }
     onFocus(e) {
-
+        this.props.dispatch(focus(e.target.value));
     }
 
     render() {
-        const { onChange, onKeyDown } = this;
-        const { onFocus } = this.props;
+        const { onChange, onKeyDown, onFocus } = this;
         return <EditableShell
                     ref={input => {
                         this.inputRef = input;
@@ -135,7 +108,7 @@ class TreeText extends React.Component {
                     id={this.props.id}
                     type="textbox"
                     className="tree-text"
-                    value={this.props.model.title}
+                    model={this.props.model}
                     onKeyDown={onKeyDown}
                     onChange={onChange}
                     onFocus={onFocus}
@@ -147,7 +120,7 @@ function mapStateToProps(state, props) {
     const {_id} = props;
     const model = getModelRef(state, _id);
     const id = 'text' + _id;
-    const selectedId = get(state, 'app_model.selectedId');
+    const selectedId = get(state, 'project_model.selectedId');
     const isSelected = (selectedId === _id);
 
 

@@ -1,19 +1,24 @@
 
-export default function getModelReducer(initialNovelModelState) {
-    return function ModelReducer(state=initialNovelModelState, action){
+export default function getModelReducer(initialProjectModelState) {
+    return function ModelReducer(state=initialProjectModelState, action){
         switch (action.type) {
-            case 'focus_app_model':
+            case 'change_project_name': {
+                return {
+                    ...state,
+                    name: action.change.name
+                };
+            }
+            case 'focus_project_model':
                 return {
                     ...state,
                     selectedId: action.focus._id,
-                    model: action.focus.model,
-                    selectionStart: action.focus.selectionStart,
-                    selectionEnd: action.focus.selectionEnd
+                    model: {
+                        ...action.focus.model
+                    }
                 }
-                break;
-            case 'drag_app_model_start':
+            case 'drag_project_model_start':
                 return {...state, dragging: action.drag.model};
-            case 'drag_app_model_end':
+            case 'drag_project_model_end':
                 return {...state, dragging: undefined};
         }
         return state;

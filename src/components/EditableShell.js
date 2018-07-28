@@ -16,6 +16,7 @@ export default class EditableShell extends React.Component {
         this.onKeyDown = this.onKeyDown.bind(this);
         this.onKeyUp = this.onKeyUp.bind(this);
         this.onMouseUp = this.onMouseUp.bind(this);
+        this.onFocus = this.onFocus.bind(this);
         this.selection = {
             selectionStart: 0,
             selectionEnd: 0
@@ -24,14 +25,14 @@ export default class EditableShell extends React.Component {
 
     shouldComponentUpdate(nextProps) {
         var el = ReactDOM.findDOMNode(this);
-        if (nextProps.value !== el.innerHTML) {
+        if (nextProps.model.title !== el.innerHTML) {
             return true;
         }
         return false;
     }
 
     componentWillReceiveProps(nextProps) {
-        if (this.contentIsEmpty(nextProps.value) && this.props.value !== nextProps.value) {
+        if (this.contentIsEmpty(nextProps.model.title) && this.props.model.title !== nextProps.model.title) {
             this.props.onChange({
                 target: {
                     value: ''
@@ -79,23 +80,19 @@ export default class EditableShell extends React.Component {
         this._supportsInput = true;
         var text = e.target.textContent.trim();
         this.selection= saveSelection(this.domElementRef);
-        if (!text && text !== this.props.value) {
+        if (!text && text !== this.props.model.title) {
             this.props.onChange({
                 target: {
-                    value: '',
-                    selectionStart: this.selection.selectionStart,
-                    selectionEnd: this.selection.selectionEnd
+                    value: ''
                 }
             });
             return;
         }
         const newValue = escapeHTML(e.target.textContent);
-        if (newValue !== this.props.value) {
+        if (newValue !== this.props.model.title) {
             this.props.onChange({
                 target: {
-                    value: newValue,
-                    selectionStart: this.selection.selectionStart,
-                    selectionEnd: this.selection.selectionEnd
+                    value: newValue
                 }
             });
         }
@@ -139,16 +136,27 @@ export default class EditableShell extends React.Component {
         this._replaceCurrentSelection(data);
         var target = ReactDOM.findDOMNode(this);
         const newValue = escapeHTML(target.textContent);
-        if (newValue !== this.props.value) {
+        if (newValue !== this.props.model.title) {
             this.props.onChange({
-                target: { value: newValue }
+                target: { value: newValue}
             });
         }
     }
 
+    onFocus(e){
+        this.selection = saveSelection(this.domElementRef);
+        this.props.onFocus({
+            target: {
+                value: this.props.model,
+                selectionStart: this.selection.selectionStart,
+                selectionEnd: this.selection.selectionEnd
+            }
+        });
+    }
+
     render() {
-        const { onInput, onPaste, onKeyDown, onKeyUp, onMouseUp } = this;
-        const { value, className, onFocus } = this.props;
+        const { onInput, onPaste, onKeyDown, onKeyUp, onMouseUp, onFocus } = this;
+        const { model: {title}, className } = this.props;
         const winningClassName = className || 'editable-text';
 
         return (
@@ -166,10 +174,10 @@ export default class EditableShell extends React.Component {
                 onKeyDown={onKeyDown}
                 onKeyUp={onKeyUp}
                 onPaste={onPaste}
-                onFocus={onFocus}
+                onClick={onFocus}
                 onMouseUp={onMouseUp}
                 dangerouslySetInnerHTML={{
-                    __html: value
+                    __html: title
                 }}
             />
         );
@@ -180,7 +188,7 @@ EditableShell.propTypes = {
     onKeyDown: propTypes.func,
     onChange: propTypes.func,
     onFocus: propTypes.func,
-    value: propTypes.string,
+    model: propTypes.object,
     className: propTypes.string
 };
 

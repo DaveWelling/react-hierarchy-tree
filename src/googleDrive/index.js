@@ -23,17 +23,17 @@ export function openGoogleDriveFile(){
     });
 
 }
-export function saveGoogleDriveFile(fileJson) {
+export function saveGoogleDriveFile(fileJson, fileName) {
     authorize()
     .then(loadDriveApi)
-    .then(ensureFolderExists)
+    .then(()=>ensureFolderExists(fileName))
     .then((folderId)=>{
-        return checkIfFileExists(folderId)
+        return checkIfFileExists(folderId, fileName)
         .then(fileId=>{
             if (fileId) {
-                return updateFile(fileJson, fileId, folderId);
+                return updateFile(fileJson, fileId, fileName);
             } else {
-                return insertFile(fileJson, folderId);
+                return insertFile(fileJson, folderId, fileName);
             }
         })
     }).then(request=>{
@@ -47,18 +47,18 @@ function loadDriveApi(){
     return gapi.client.load('drive', 'v2');
 }
 
-function ensureFolderExists(){
+function ensureFolderExists(fileName){
     return gapi.client.request({
         path: '/drive/v2/files',
         method: 'GET',
-        params: { q: 'mimeType="application/vnd.google-apps.folder" and title="Novel"' }
+        params: { q: `mimeType="application/vnd.google-apps.folder" and title="${fileName}"` }
     }).then(request=>{
         if (request.result.items.length === 0) {
             return gapi.client.request({
                 path: '/drive/v2/files',
                 method: 'POST',
                 body: {
-                    title: 'Novel',
+                    title: fileName,
                     mimeType: "application/vnd.google-apps.folder"
                 }
             }).then(request=>{
@@ -68,26 +68,25 @@ function ensureFolderExists(){
         return Promise.resolve(request.result.items[0].id);
     });
 }
-function checkIfFileExists(folderId){
+function checkIfFileExists(folderId, fileName){
     return gapi.client.request({
         path: '/drive/v2/files',
         method: 'GET',
-        params: { q: `mimeType="application/json" and title="novel.json" and "${folderId}" in parents` }
+        params: { q: `mimeType="application/json" and title="${fileName}.json" and "${folderId}" in parents` }
     }).then(request=>{
         if (request.result.items.length) {
             return request.result.items[0].id;
         }
     })
 }
-function updateFile(fileJson, fileId, folderId) {
+function updateFile(fileJson, fileId, fileName) {
     const boundary = '-------314159265358979323846264';
     const delimiter = '\r\n--' + boundary + '\r\n';
     const close_delim = '\r\n--' + boundary + '--';
 
-    const fileName = 'novel.json';
     const contentType = 'application/json';
     const metadata = {
-        title: fileName,
+        title: fileName + '.json',
         mimeType: contentType
     };
     const base64Data = btoa(JSON.stringify(fileJson));
@@ -113,15 +112,14 @@ function updateFile(fileJson, fileId, folderId) {
         body: multipartRequestBody
     });
 }
-function insertFile(fileJson, folderId) {
+function insertFile(fileJson, folderId, fileName) {
     const boundary = '-------314159265358979323846264';
     const delimiter = '\r\n--' + boundary + '\r\n';
     const close_delim = '\r\n--' + boundary + '--';
 
-    const fileName = 'novel.json';
     const contentType = 'application/json';
     const metadata = {
-        title: fileName,
+        title: fileName + '.json',
         mimeType: contentType,
         parents: [{id:folderId}]
     };

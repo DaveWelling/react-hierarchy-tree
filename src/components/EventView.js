@@ -1,7 +1,5 @@
 import React from 'react';
 import Quill from 'quill';
-import {connect} from 'react-redux';
-import {getModelRef} from '../orm/selector/modelSelectors';
 import DatePicker from 'react-datepicker';
 import {debounce} from 'lodash'
 import moment from 'moment';
@@ -16,7 +14,7 @@ class EventView extends React.Component {
         this.onChangeDebounced = debounce(this.onChange, 1000);
     }
     componentDidMount(){
-        const text = this.props.model ? this.props.model.text : undefined;
+        const description = this.props.model ? this.props.model.description : undefined;
         const quill = this.quill = new Quill(`#formTextView_${this.props.model._id}`, {
             modules: {
                 history: {
@@ -27,46 +25,33 @@ class EventView extends React.Component {
               },
             theme: 'snow'
         });
-        quill.setContents(text, 'silent');
+        quill.setContents(description, 'silent');
         const {onChangeDebounced} = this;
         quill.on('text-change', function() {
             onChangeDebounced(quill);
         });
     }
+    componentDidUpdate(prevProps){
+        const {description} = this.props.model;
+        if (prevProps.model.description !== description) {
+            this.quill.setContents(description);
+        }
+    }
     onChange(e){
-        const {isNew, dispatch, model:{_id}} = this.props;
         let {timing, description} = this.props.model;
         if (e instanceof moment) {
             timing = e;
         } else {
             description = e.getContents();
         }
-        if (isNew) {
-            dispatch({
-                type: 'create_app_model',
-                create: {
-                    newEvent: {
-                        _id,
-                        timing,
-                        description
-                    }
-                }
-            });
-        } else {
-            dispatch({
-                type: 'update_app_model',
-                update: {
-                    _id,
-                    changes: {
-                        timing,
-                        description
-                    }
-                }
-            });
-        }
+
+        this.props.onChange({
+            timing,
+            description
+        })
     }
     render() {
-        let {description, timing} = this.props.model;
+        let {timing} = this.props.model;
 
         const {onChange} = this;
         timing = timing || moment();
@@ -84,14 +69,6 @@ class EventView extends React.Component {
     }
 }
 
-function mapStateToProps(state, ownProps){
-    let model = getModelRef(state, ownProps.model._id);
-
-    return {
-        isNew: !model,
-        model
-    };
-}
 
 
-export default connect(mapStateToProps)(EventView);
+export default EventView;
