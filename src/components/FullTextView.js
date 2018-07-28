@@ -48,6 +48,12 @@ class FullTextView extends React.Component {
             onChange(quill);
         });
     }
+    componentDidUpdate(prevProps){
+        const {text} = this.props.model;
+        if (prevProps.model.text !== text) {
+            this.quill.setContents(text);
+        }
+    }
     onChange(quill) {
         this.props.onChange({
             text: quill.getContents()

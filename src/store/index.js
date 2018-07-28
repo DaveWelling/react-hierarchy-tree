@@ -1,4 +1,4 @@
-import bootstrap from './orm/bootstrap';
+import bootstrap from '../orm/bootstrap';
 import orm from '../orm';
 import getModelReducer from '../reducers/modelReducer';
 import thunk from 'redux-thunk';
