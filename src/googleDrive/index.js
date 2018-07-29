@@ -1,13 +1,13 @@
 
 import { toast } from 'react-toastify';
 import authorize from './authorize';
-
-export function openGoogleDriveFile(){
+const folderName = 'Curator';
+export function openGoogleDriveFile(fileName){
     return authorize()
     .then(loadDriveApi)
-    .then(ensureFolderExists)
+    .then(()=>ensureFolderExists(folderName))
     .then((folderId)=>{
-        return checkIfFileExists(folderId)
+        return checkIfFileExists(folderId, fileName)
         .then(fileId=>{
             if (fileId) {
                 return getFile(fileId, folderId);
@@ -26,7 +26,7 @@ export function openGoogleDriveFile(){
 export function saveGoogleDriveFile(fileJson, fileName) {
     authorize()
     .then(loadDriveApi)
-    .then(()=>ensureFolderExists(fileName))
+    .then(()=>ensureFolderExists(folderName))
     .then((folderId)=>{
         return checkIfFileExists(folderId, fileName)
         .then(fileId=>{
@@ -37,7 +37,7 @@ export function saveGoogleDriveFile(fileJson, fileName) {
             }
         })
     }).then(request=>{
-        toast('File sent to Google Drive');
+        toast(`File ${fileName} sent to Google Drive`);
     }).catch(err=>{
         toast(err.message || err);
     });
@@ -47,18 +47,18 @@ function loadDriveApi(){
     return gapi.client.load('drive', 'v2');
 }
 
-function ensureFolderExists(fileName){
+function ensureFolderExists(folderName){
     return gapi.client.request({
         path: '/drive/v2/files',
         method: 'GET',
-        params: { q: `mimeType="application/vnd.google-apps.folder" and title="${fileName}"` }
+        params: { q: `mimeType="application/vnd.google-apps.folder" and title="${folderName}"` }
     }).then(request=>{
         if (request.result.items.length === 0) {
             return gapi.client.request({
                 path: '/drive/v2/files',
                 method: 'POST',
                 body: {
-                    title: fileName,
+                    title: folderName,
                     mimeType: "application/vnd.google-apps.folder"
                 }
             }).then(request=>{
@@ -66,6 +66,20 @@ function ensureFolderExists(fileName){
             });
         }
         return Promise.resolve(request.result.items[0].id);
+    });
+}
+export function getAllJsonInFolder() {
+    return authorize()
+    .then(loadDriveApi)
+    .then(()=>ensureFolderExists(folderName))
+    .then((folderId)=>{
+        return gapi.client.request({
+            path: '/drive/v2/files',
+            method: 'GET',
+            params: { q: `mimeType="application/json" and "${folderId}" in parents` }
+        }).then(request=>{
+            return request.result.items.map(i=>({title:i.title.substr(0,i.title.length-5), id:i.id}));
+        })
     });
 }
 function checkIfFileExists(folderId, fileName){

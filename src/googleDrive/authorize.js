@@ -18,8 +18,11 @@ export default function authorize() {
             updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
 
         }).catch(err=>{
-            const standardMessage = 'There was an error when authenticating to the google drive API';
-            reject(standardMessage + ': ' + err.message || err);
+            let message = 'There was an error when authenticating to the google drive API';
+            if (err.error === 'idpiframe_initialization_failed') {
+                message = 'It looks like you may have disabled cookies.  You need them to log into Google Drive with this application.';
+            }
+            reject(message + '  Details: ' + err.message || err);
         });
 
         function updateSigninStatus(isSignedIn) {

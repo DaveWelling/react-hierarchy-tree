@@ -10,7 +10,7 @@
 .toolbar-button {
     background: transparent;
     color: white;
-    margin: .5em;
+    margin: 0.5em;
     border: none;
 }
 
@@ -20,4 +20,44 @@
 
 .toolbar-button:focus {
     outline: none;
+}
+
+.modalFileHighlighted {
+    background-color: slategray;
+}
+
+.toolbarModal {
+    background-color: darkslategray;
+    color: white;
+    margin: 3em;
+    display: flex;
+    flex-direction: column;
+}
+
+.modalFile {
+    padding: .5em;
+    cursor: pointer;
+}
+
+.modalFileList {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    margin: 1em;
+    padding: 1em;
+   border: slategray thin solid;
+}
+
+.modalButtons {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.modalButton {
+    border-radius: 3px;
+  padding: 0.35em;
+  background-color: slategray;
+  margin: .25em 1em .75em 0;
+  border: none;
 }

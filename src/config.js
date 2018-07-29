@@ -1,4 +1,3 @@
-import cuid from 'cuid';
 const config = {
     defaultModelType: 'event',
     dataTypes:[

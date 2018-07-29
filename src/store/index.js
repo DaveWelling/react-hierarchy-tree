@@ -10,7 +10,7 @@ import { createReducer } from 'redux-orm';
 import eventSink from './eventSink';
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import cuid from 'cuid';
-
+import nameMiddleware from './nameMiddleware';
 
 const rootModelId = config.rootModelId || cuid();
 const initialOrmState = bootstrap(orm, rootModelId);
@@ -46,7 +46,7 @@ const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 const store = createStore(
     persistedReducer,
     initialOrmState,
-    composeEnhancers(applyMiddleware(thunk, eventSink.eventSink))
+    composeEnhancers(applyMiddleware(thunk, nameMiddleware, eventSink.eventSink))
 );
 
 export default store;
@@ -67,6 +67,7 @@ function getEmptyState(){
 
 function getImportedState(action) {
     const rootModelId = action.import.data.rootModelId;
+    const projectName = action.import.data.projectName;
     return {
         orm: action.import.data.orm,
         project_model: {
@@ -82,6 +83,7 @@ function getInitialAppModelState(rootModelId, initialOrmState) {
         selectedId: defaultFocusModel ? defaultFocusModel._id: undefined,
         model: defaultFocusModel,
         selectionStart: 0,
-        selectionEnd: 0
+        selectionEnd: 0,
+        name
     }
 }
