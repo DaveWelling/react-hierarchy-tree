@@ -16,3 +16,7 @@ render(
     </Provider>),
     document.querySelector('#app')
 );
+// https://wicg.github.io/ResizeObserver/
+if (global.window) {
+    window.ResizeObserver = window.ResizeObserver || require('resize-observer-polyfill');
+}

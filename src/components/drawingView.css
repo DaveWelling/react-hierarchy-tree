@@ -1,0 +1,32 @@
+.drawingView {
+    display:flex;
+    flex-direction: column;
+}
+.drawingView canvas {
+    flex-grow: 1;
+}
+.canvasToolbar {
+    display:flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    background-color: black;
+    color: lightslategray;
+    padding: .5em;
+}
+.canvasToolbar label {
+    text-align: right;
+    padding: .25em .25em;
+    flex-grow: 2;
+}
+
+button#clear {
+    background: black;
+    color: lightslategray;
+    border: none;
+}
+button#clear:active {
+    color: white;
+}
+button#clear:focus {
+    outline: none;
+}

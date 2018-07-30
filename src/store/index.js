@@ -11,12 +11,17 @@ import eventSink from './eventSink';
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import cuid from 'cuid';
 import nameMiddleware from './nameMiddleware';
+import localForage from 'localforage';
 
 const rootModelId = config.rootModelId || cuid();
 const initialOrmState = bootstrap(orm, rootModelId);
 
 const initialProjectModelState = getInitialAppModelState(rootModelId, initialOrmState);
 
+localForage.config({
+    name: 'Curator',
+    storeName: 'curator'
+});
 // add other reducers as properties beside 'orm'
 const appReducer = combineReducers({
     orm: createReducer(orm),
@@ -35,7 +40,7 @@ const rootReducer = (state, action) => {
 
 const persistConfig = {
     key: 'root',
-    storage,
+    storage: localForage,
     stateReconciler: autoMergeLevel2
 };
 const persistedReducer = persistReducer(persistConfig, rootReducer);

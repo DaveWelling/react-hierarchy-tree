@@ -30,10 +30,14 @@ select {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
+  margin-top: .2em;
 }
 
 
-.select-container {position:relative; display: inline;}
+.select-container {
+  position:relative; display: inline;
+}
+
 .select-container:after {content:""; width:0; height:0; position:absolute; pointer-events: none;}
 .select-container:after {
     border-left: 6px solid transparent;

@@ -8,6 +8,7 @@
     cursor: text;
     border: thin transparent solid;
     line-height: 1.1em;
+    margin-top: .1em;
 }
 .tree-text:hover {
     border: thin lightgray solid;
