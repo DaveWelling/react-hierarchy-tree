@@ -4,6 +4,7 @@ import { getModelRef } from '../orm/selector/modelSelectors';
 import { makeChildOfPreviousSibling, addChild, makeSiblingOfParent, mergeWithPreviousSibling, moveToPrevious, moveToNext, focus } from '../actions/modelActions';
 import {get} from 'lodash';
 import EditableShell from './EditableShell';
+import {subscribe} from '../store/eventSink';
 
 import './treeText.css';
 class TreeText extends React.Component {
@@ -16,17 +17,16 @@ class TreeText extends React.Component {
         this.focusIfNecessary = this.focusIfNecessary.bind(this);
     }
 
-    componentDidMount() {
-        this.focusIfNecessary();
+    componentWillMount(){
+        this.unsubscribe = subscribe('focus_project_model', this.focusIfNecessary);
     }
-    componentDidUpdate() {
-        this.focusIfNecessary();
+    componentWillUnmount(){
+        if (this.unsubscribe) this.unsubscribe();
     }
 
-    focusIfNecessary() {
+    focusIfNecessary(actionData) {
         if (!this.inputRef) return;
-        let {isSelected, model: {ui: {selectionStart, selectionEnd}}} = this.props;
-        if (isSelected &&  document.activeElement !== this.inputRef.domElementRef) {
+        if (actionData._id === this.props.model._id &&  document.activeElement !== this.inputRef.domElementRef) {
             this.inputRef.focus();
             if (typeof selectionStart !== 'undefined') {
                 selectionEnd = selectionEnd || selectionStart;
@@ -90,7 +90,7 @@ class TreeText extends React.Component {
     addSibling(cursorPosition) {
         const {value, model, nextSequence, onValueChange, dispatch} = this.props;
         const newValue = value.substr(0, cursorPosition);
-        const siblingValue = value.substr(cursorPosition);
+        const siblingValue = value.substr(cursorPosition).trim();
         onValueChange(newValue);
         dispatch(addChild(model, siblingValue, nextSequence, model.type));
     }
@@ -120,11 +120,8 @@ function mapStateToProps(state, props) {
     const {_id} = props;
     const model = getModelRef(state, _id);
     const id = 'text' + _id;
-    const selectedId = get(state, 'project_model.selectedId');
-    const isSelected = (selectedId === _id);
 
-
-    return { id, model, isSelected };
+    return { id, model };
 }
 
 export default connect(

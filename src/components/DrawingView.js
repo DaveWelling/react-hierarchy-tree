@@ -6,6 +6,7 @@ import './drawingView.css';
 class DrawingView extends React.Component {
     constructor(props) {
         super(props);
+        this.onClear = this.onClear.bind(this);
         this.onChange = this.onChange.bind(this);
         this.onChange = throttle(this.onChange, 1000);
         this.onResize = this.onResize.bind(this);
@@ -33,7 +34,7 @@ class DrawingView extends React.Component {
         this.atrament = new Atrament(this.canvas, this.canvas.width, this.canvas.height);
         this.atrament.smoothing = false;
         this.atrament.color = '#ffffff';
-        this.atrament.weight = .1;
+        this.atrament.weight = .05;
         this.writeToCanvas(this.canvas, drawing);
     }
     writeToCanvas(canvas, drawing) {
@@ -64,7 +65,9 @@ class DrawingView extends React.Component {
     }
     onClear(){
         this.atrament.clear();
-        this.props.onChange
+        var ctx = this.canvas.getContext('2d');
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.onChange();
     }
     onSettingsChange(e){
         let value;
@@ -89,7 +92,7 @@ class DrawingView extends React.Component {
     }
     render() {
         const that = this;
-        const {onSettingsChange} = this;
+        const {onSettingsChange, onClear} = this;
         return (
             <div id='canvasContainer' className="fullHeight drawingView">
                 <canvas
@@ -98,18 +101,18 @@ class DrawingView extends React.Component {
                     onMouseUp={this.onChange}
                 />
                 <div className="canvasToolbar">
-                    <button id="clear" onClick={()=>{that.atrament.clear();}}>
+                    <button id="clear" onClick={onClear}>
                         <i className="material-icons">delete</i>
                     </button>
                     <label>Thickness</label>
                     <input
                         name="weight"
                         type="range"
-                        min=".1"
+                        min=".05"
                         max="40"
                         onChange={onSettingsChange}
                         value={that.state.weight}
-                        step="0.1"
+                        step="0.05"
                         autoComplete="off"
                     />
                     {/* <label>Smoothing</label>

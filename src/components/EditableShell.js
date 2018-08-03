@@ -99,6 +99,7 @@ export default class EditableShell extends React.Component {
     }
 
     onKeyDown(e){
+        this.selection= saveSelection(this.domElementRef);
         e.target.selectionStart = this.selection.selectionStart;
         e.target.selectionEnd = this.selection.selectionEnd;
         this.props.onKeyDown(e);

@@ -11,7 +11,6 @@ export default function getModelReducer(initialProjectModelState) {
             case 'focus_project_model':
                 return {
                     ...state,
-                    selectedId: action.focus._id,
                     model: {
                         ...action.focus.model
                     }

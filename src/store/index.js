@@ -85,7 +85,6 @@ function getInitialAppModelState(rootModelId, initialOrmState) {
     const defaultFocusModel = Object.values(initialOrmState.orm.Model.itemsById).find(m=>m.parent===rootModelId && m.title==='');
     return {
         rootModelId,
-        selectedId: defaultFocusModel ? defaultFocusModel._id: undefined,
         model: defaultFocusModel,
         selectionStart: 0,
         selectionEnd: 0,

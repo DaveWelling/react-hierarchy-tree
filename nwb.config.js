@@ -14,7 +14,14 @@ module.exports = {
         exclude: /node_modules\/(?![redux\-orm])/,
         options: {babelrc: false, cacheDirectory: true}
       }
-    }
+    },
+    html: {
+      favicon: 'src/favicon.png'
+    },
+    copy: [
+      // Copy directory contents to output
+      {from: 'src/apple-touch-icon.png'}
+    ]
     // config(config) {
     //   config.ignore =  "/node_modules/(?![redux-orm])/"
     //   return config;

@@ -114,8 +114,8 @@ class Toolbar extends React.Component {
         const { files } = this.state;
         return (
             <div className="toolbar">
-                <button title="Download" className="toolbar-button" onClick={download}>
-                    <i className="material-icons">cloud_download</i>
+                <button title="Download Project" className="toolbar-button" onClick={download}>
+                    <i className="material-icons">save_alt</i>
                 </button>
                 <input
                     className="toolbar-button"
@@ -125,17 +125,17 @@ class Toolbar extends React.Component {
                     style={{ display: 'none' }}
                     onChange={upload}
                 />
-                <button title="Upload" id="visibleFileElem" className="toolbar-button">
+                <button title="Upload Project" id="visibleFileElem" className="toolbar-button">
+                    <i className="material-icons">open_in_browser</i>
+                </button>
+                <button title="Save to Google Drive" className="toolbar-button" onClick={save}>
                     <i className="material-icons">cloud_upload</i>
+                </button>
+                <button title="Open from Google Drive" className="toolbar-button" onClick={open}>
+                    <i className="material-icons">cloud_download</i>
                 </button>
                 <button title="Clear" className="toolbar-button" onClick={clear}>
                     <i className="material-icons">clear</i>
-                </button>
-                <button title="Save to Google Drive" className="toolbar-button" onClick={save}>
-                    <i className="material-icons">save_alt</i>
-                </button>
-                <button title="Open from Google Drive" className="toolbar-button" onClick={open}>
-                    <i className="material-icons">open_in_browser</i>
                 </button>
                 <FileSelector files={files} selectFile={openFile} cancelFileSelection={cancelOpen}/>
             </div>
