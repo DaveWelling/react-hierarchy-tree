@@ -1,6 +1,7 @@
 
 import { toast } from 'react-toastify';
 import authorize from './authorize';
+import config from '../config';
 const folderName = 'Curator';
 export function openGoogleDriveFile(fileName){
     return authorize()
@@ -43,8 +44,15 @@ export function saveGoogleDriveFile(fileJson, fileName) {
     });
 }
 
+
 function loadDriveApi(){
     return gapi.client.load('drive', 'v2');
+}
+
+function loadPickerApi(){
+    return new Promise((resolve, reject)=>gapi.load('picker', ()=>{
+        resolve();
+    }));
 }
 
 function ensureFolderExists(folderName){
@@ -82,6 +90,48 @@ export function getAllJsonInFolder() {
         })
     });
 }
+
+export function showPicturePicker(projectName){
+    function pickerCallback(data) {
+        var url = 'nothing';
+        if (data[google.picker.Response.ACTION] == google.picker.Action.PICKED) {
+          var doc = data[google.picker.Response.DOCUMENTS][0];
+          url = doc[google.picker.Document.URL];
+        }
+        console.log('You picked: ' + url);
+    }
+    return authorize()
+    .then(loadDriveApi)
+    .then(loadPickerApi)
+    .then(()=>ensureFolderExists(folderName))
+    .then((folderId)=>{
+        var picker = new google.picker.PickerBuilder().
+        addView(google.picker.ViewId.PHOTOS).
+        setAuthUser().
+        // setAppId(config.googleAppId).
+        // setOAuthToken(gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().id_token).
+        setCallback(pickerCallback).
+        build();
+        picker.setVisible(true);
+    });
+}
+
+export function getAllPicturesInFolder(projectName) {
+    return authorize()
+    .then(loadDriveApi)
+    .then(loadPickerApi)
+    .then(()=>ensureFolderExists(folderName))
+    .then((folderId)=>{
+        return gapi.client.request({
+            path: '/drive/v2/files',
+            method: 'GET',
+            params: { q: `mimeType="application/json" and "${folderId}" in parents` }
+        }).then(request=>{
+            return request.result.items.map(i=>({title:i.title.substr(0,i.title.length-5), id:i.id}));
+        })
+    });
+}
+
 function checkIfFileExists(folderId, fileName){
     return gapi.client.request({
         path: '/drive/v2/files',

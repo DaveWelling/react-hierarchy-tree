@@ -19,14 +19,17 @@
     flex-grow: 2;
 }
 
-button#clear {
+.canvasButton {
     background: black;
     color: lightslategray;
     border: none;
 }
-button#clear:active {
+.canvasButton:hover:active {
     color: white;
 }
-button#clear:focus {
+.canvasButton:hover {
+    color: darkslategray;
+}
+.canvasButton:focus {
     outline: none;
 }

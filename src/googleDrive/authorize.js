@@ -10,33 +10,44 @@ export default function authorize() {
             return;
         }
 
-        init().then(()=>{
-            // Listen for sign-in state changes.
-            gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+        gapi.load('client', start);
+        function start(){
+            // return gapi.load('auth').then(()=>{
+            //     return gapi.auth.authorize({
+            //         client_id: config.googleClientId,
+            //         scope: config.googleScope
+            //     })
+            // })
 
-            // Handle the initial sign-in state.
-            updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+            return init().then(()=>{
+                // Listen for sign-in state changes.
+                gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
 
-        }).catch(err=>{
-            let message = 'There was an error when authenticating to the google drive API';
-            if (err.error === 'idpiframe_initialization_failed') {
-                message = 'It looks like you may have disabled cookies.  You need them to log into Google Drive with this application.';
-            }
-            reject(message + '  Details: ' + err.message || err);
-        });
+                // Handle the initial sign-in state.
+                updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
 
-        function updateSigninStatus(isSignedIn) {
-            authorized = isSignedIn;
-            if (isSignedIn) resolve();
-            else {
-                gapi.auth2.getAuthInstance().signIn();
-            }
-        }
-        function init() {
-            return gapi.client.init({
-                client_id: config.googleClientId,
-                scope: config.googleScope
+            }).catch(err=>{
+                let message = 'There was an error when authenticating to the google drive API';
+                if (err.error === 'idpiframe_initialization_failed') {
+                    message = 'It looks like you may have disabled cookies.  You need them to log into Google Drive with this application.';
+                }
+                reject(message + '  Details: ' + err.message || err);
             });
+
+            function updateSigninStatus(isSignedIn) {
+                authorized = isSignedIn;
+                if (isSignedIn) resolve();
+                else {
+                    gapi.auth2.getAuthInstance().signIn();
+                }
+            }
+            function init() {
+                return gapi.client.init({
+                    client_id: config.googleClientId,
+                    scope: config.googleScope
+                });
+            }
         }
+
     });
 }

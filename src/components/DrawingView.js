@@ -2,7 +2,7 @@ import React from 'react';
 import { throttle } from 'lodash';
 import Atrament from 'atrament';
 import './drawingView.css';
-
+import {showPicturePicker} from '../googleDrive';
 class DrawingView extends React.Component {
     constructor(props) {
         super(props);
@@ -11,6 +11,7 @@ class DrawingView extends React.Component {
         this.onChange = throttle(this.onChange, 1000);
         this.onResize = this.onResize.bind(this);
         this.onSettingsChange = this.onSettingsChange.bind(this);
+        this.setBackground = this.setBackground.bind(this);
         this.state = {
             weight: .1,
             smoothing: false,
@@ -88,11 +89,13 @@ class DrawingView extends React.Component {
         this.setState({
             [e.target.name] : value
         })
-
+    }
+    setBackground(){
+        showPicturePicker();
     }
     render() {
         const that = this;
-        const {onSettingsChange, onClear} = this;
+        const {onSettingsChange, onClear, setBackground} = this;
         return (
             <div id='canvasContainer' className="fullHeight drawingView">
                 <canvas
@@ -101,8 +104,11 @@ class DrawingView extends React.Component {
                     onMouseUp={this.onChange}
                 />
                 <div className="canvasToolbar">
-                    <button id="clear" onClick={onClear}>
+                    <button className="canvasButton" onClick={onClear}>
                         <i className="material-icons">delete</i>
+                    </button>
+                    <button className="canvasButton" onClick={setBackground}>
+                        <i className="material-icons">add_photo_alternate</i>
                     </button>
                     <label>Thickness</label>
                     <input
@@ -154,6 +160,7 @@ class DrawingView extends React.Component {
                         value={this.state.color}
                         autoComplete="off"
                     />
+
                     {/* <label>Opacity</label>
                     <input
                         name="opacity"
