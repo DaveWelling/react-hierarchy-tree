@@ -34,20 +34,6 @@
     flex-direction: column;
 }
 
-.modalFile {
-    padding: .5em;
-    cursor: pointer;
-}
-
-.modalFileList {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    margin: 1em;
-    padding: 1em;
-   border: slategray thin solid;
-}
-
 .modalButtons {
     display: flex;
     flex-direction: row;

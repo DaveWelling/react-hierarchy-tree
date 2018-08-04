@@ -1,74 +1,41 @@
 import React from 'react';
 import { throttle } from 'lodash';
-import Atrament from 'atrament';
 import './drawingView.css';
-import {showPicturePicker} from '../googleDrive';
+import {getAllPicturesInFolder, getImageUrl} from '../googleDrive';
+import FileSelector from './FileSelector';
+import CanvasWrap from './CanvasWrap';
+import { toast } from 'react-toastify';
+
 class DrawingView extends React.Component {
     constructor(props) {
         super(props);
         this.onClear = this.onClear.bind(this);
         this.onChange = this.onChange.bind(this);
         this.onChange = throttle(this.onChange, 1000);
-        this.onResize = this.onResize.bind(this);
         this.onSettingsChange = this.onSettingsChange.bind(this);
         this.setBackground = this.setBackground.bind(this);
+        this.openFile = this.openFile.bind(this);
+        this.cancelOpen = this.cancelOpen.bind(this);
         this.state = {
-            weight: .1,
-            smoothing: false,
-            adaptiveStroke: true,
-            mode: 'draw',
-            color: '#ffffff',
-            opacity: 1
+            canvasSettings: {
+                weight: .05,
+                smoothing: false,
+                adaptiveStroke: true,
+                mode: 'draw',
+                color: '#ffffff',
+                opacity: 1
+            }
         }
     }
-    componentDidMount() {
-        const canvas = this.canvas = document.querySelector(`#drawingView_${this.props.model._id}`);
-        const resizeObserver = new ResizeObserver(event => this.onResize(event));
-        resizeObserver.observe(canvas);
-        this.onResize();
-    }
-    onResize() {
-        const drawing = this.props.model ? this.props.model.drawing : undefined;
-        const rect = this.canvas.parentNode.getBoundingClientRect();
-        this.canvas.height = rect.height - 44;
-        this.canvas.width = rect.width;
-        this.atrament = new Atrament(this.canvas, this.canvas.width, this.canvas.height);
-        this.atrament.smoothing = false;
-        this.atrament.color = '#ffffff';
-        this.atrament.weight = .05;
-        this.writeToCanvas(this.canvas, drawing);
-    }
-    writeToCanvas(canvas, drawing) {
-        var ctx = canvas.getContext('2d');
-        const image = new Image();
-        image.onload = function() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.mozImageSmoothingEnabled = true;
-            ctx.webkitImageSmoothingEnabled = true;
-            ctx.msImageSmoothingEnabled = true;
-            ctx.imageSmoothingEnabled = true
-            ctx.drawImage(image, 0, 0); // draw the new image to the screen
-        };
-        image.src = drawing;
-    }
-    componentDidUpdate(prevProps) {
-        const { drawing } = this.props.model;
-        if (prevProps.model.drawing !== drawing) {
-            this.writeToCanvas(this.canvas, drawing);
-        }
-    }
-    onChange() {
-        console.log('onchange fired');
-        const drawing = this.atrament.toImage();
+    onChange(drawing) {
         this.props.onChange({
             drawing
         });
     }
     onClear(){
-        this.atrament.clear();
-        var ctx = this.canvas.getContext('2d');
-        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.onChange();
+        this.props.onChange({
+            drawing: undefined
+        });
     }
     onSettingsChange(e){
         let value;
@@ -85,24 +52,41 @@ class DrawingView extends React.Component {
                 value = e.target.value;
                 break;
         }
-        this.atrament[e.target.name] = value;
         this.setState({
-            [e.target.name] : value
+            canvasSettings: {
+                ...this.state.canvasSettings,
+                [e.target.name] : value
+            }
         })
     }
     setBackground(){
-        showPicturePicker();
+        getAllPicturesInFolder(this.props.projectName).then(pictures=>{
+            this.setState({
+                files: pictures
+            });
+        })
+    }
+    openFile(file){
+        this.setState({files: undefined}); // remove files to close dialog
+        getImageUrl(file.id).then(dataUrl=>{
+            this.writeToCanvas(this.canvas, dataUrl, false);
+        }).catch(err=>{
+            toast('An error occurred while getting the file from google drive.');
+            console.error(err.stack || err.message || JSON.stringify(err, null, 3));
+        });
+
+    }
+    cancelOpen(){
+        // remove files to close dialog
+        this.setState({files: undefined});
     }
     render() {
         const that = this;
-        const {onSettingsChange, onClear, setBackground} = this;
+        const { files, canvasSettings } = this.state;
+        const {onSettingsChange, onClear, setBackground, openFile, cancelOpen, onChange} = this;
         return (
             <div id='canvasContainer' className="fullHeight drawingView">
-                <canvas
-                    id={'drawingView_' + this.props.model._id}
-                    onTouchEnd={this.onChange}
-                    onMouseUp={this.onChange}
-                />
+                <CanvasWrap id={this.props.model._id} onChange={onChange} canvasSettings={canvasSettings} drawing={this.props.model.drawing} />
                 <div className="canvasToolbar">
                     <button className="canvasButton" onClick={onClear}>
                         <i className="material-icons">delete</i>
@@ -117,7 +101,7 @@ class DrawingView extends React.Component {
                         min=".05"
                         max="40"
                         onChange={onSettingsChange}
-                        value={that.state.weight}
+                        value={that.state.canvasSettings.weight}
                         step="0.05"
                         autoComplete="off"
                     />
@@ -126,7 +110,7 @@ class DrawingView extends React.Component {
                         name="smoothing"
                         type="checkbox"
                         onChange={onSettingsChange}
-                        checked={this.state.smoothing}
+                        checked={this.state.canvasSettings.smoothing}
                         autoComplete="off"
                     />
                     <label>Adaptive stroke</label>
@@ -134,13 +118,13 @@ class DrawingView extends React.Component {
                         name="adaptiveStroke"
                         type="checkbox"
                         onChange={onSettingsChange}
-                        checked={this.state.adaptiveStroke}
+                        checked={this.state.canvasSettings.adaptiveStroke}
                         autoComplete="off"
                     /> */}
                     <label>Mode</label>
 
                     <div className="select-container">
-                        <select name="mode" value={this.state.mode} onChange={onSettingsChange}>
+                        <select name="mode" value={this.state.canvasSettings.mode} onChange={onSettingsChange}>
                             <option value="draw" default>
                                 Draw
                             </option>
@@ -157,10 +141,10 @@ class DrawingView extends React.Component {
                         name="color"
                         type="color"
                         onChange={onSettingsChange}
-                        value={this.state.color}
+                        value={this.state.canvasSettings.color}
                         autoComplete="off"
                     />
-
+                    <FileSelector files={files} selectFile={openFile} cancelFileSelection={cancelOpen}/>
                     {/* <label>Opacity</label>
                     <input
                         name="opacity"
@@ -168,7 +152,7 @@ class DrawingView extends React.Component {
                         min="0"
                         max="1"
                         onChange={onSettingsChange}
-                        value={this.state.opacity}
+                        value={this.state.canvasSettings.opacity}
                         step="0.05"
                         autoComplete="off"
                     /> */}

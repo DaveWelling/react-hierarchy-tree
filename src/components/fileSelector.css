@@ -1,0 +1,21 @@
+
+
+.modalFile {
+    padding: .5em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.fileText {
+    padding: .5em;
+}
+
+.modalFileList {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    margin: 1em;
+    padding: 1em;
+   border: slategray thin solid;
+}

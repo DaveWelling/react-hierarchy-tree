@@ -22,7 +22,7 @@ class EditView extends React.Component {
         });
     }
     render() {
-        const {model} = this.props;
+        const {model, projectName} = this.props;
         const {onChange} = this;
         let toRender = <div>Select a node.</div>;
         if (model && model.type) {
@@ -31,7 +31,7 @@ class EditView extends React.Component {
                 ViewType = ViewType.default;
             }
             toRender = (<div className='edit-view'>
-                <ViewType model={model} onChange={onChange}></ViewType>
+                <ViewType model={model} projectName={projectName} onChange={onChange}></ViewType>
             </div>);
         }
         return toRender;
@@ -40,8 +40,10 @@ class EditView extends React.Component {
 
 function mapStateToProps(state, ownProps){
     let model = get(state, 'project_model.model');
+    const projectName = get(state, 'project_model.name');
     return {
-        model
+        model,
+        projectName
     };
 }
 

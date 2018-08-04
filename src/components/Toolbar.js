@@ -95,9 +95,9 @@ class Toolbar extends React.Component {
             });
         });
     }
-    openFile(fileName) {
+    openFile(file) {
         this.setState({files: undefined}); // remove files to close dialog
-        return openGoogleDriveFile(fileName).then(data => {
+        return openGoogleDriveFile(file.title).then(data => {
             persistor.purge();
             this.props.dispatch({
                 type: 'import_app',

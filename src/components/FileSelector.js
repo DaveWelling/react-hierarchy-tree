@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactModal from 'react-modal';
+import './fileSelector.css';
 
 export default class FileSelector extends React.Component {
     constructor(props) {
@@ -7,12 +8,12 @@ export default class FileSelector extends React.Component {
         this.state = {};
         this.highlight = this.highlight.bind(this);
     }
-    highlight(selectedFileName) {
-        this.setState({selectedFileName});
+    highlight(selectedFile) {
+        this.setState({selectedFile});
     }
     render() {
         const {highlight} = this;
-        const {selectedFileName} = this.state;
+        const {selectedFile} = this.state;
         const { files, selectFile, cancelFileSelection } = this.props;
         return (
             <ReactModal className="toolbarModal" ariaHideApp={false} isOpen={!!files}>
@@ -20,12 +21,13 @@ export default class FileSelector extends React.Component {
                 <div className="modalFileList">
                     {files &&
                         files.map(file => {
-                            let className = selectedFileName === file.title ? 'modalFileHighlighted modalFile' : 'modalFile';
+                            let className = selectedFile === file ? 'modalFileHighlighted modalFile' : 'modalFile';
                             return (
-                                <div onClick={() => highlight(file.title)}
+                                <div onClick={() => highlight(file)}
                                     className={className}
                                     key={file.id}>
-                                    {file.title}
+                                    {file.thumbnailLink && <img src={file.thumbnailLink}/>}
+                                    <span className="fileText">{file.title}</span>
                                 </div>
                             );
                         })}
@@ -37,7 +39,7 @@ export default class FileSelector extends React.Component {
                     </button>
                     <button
                         className="modalButton"
-                        onClick={() => selectFile(this.state.selectedFileName)}
+                        onClick={() => selectFile(this.state.selectedFile)}
                     >
                         Select
                     </button>
