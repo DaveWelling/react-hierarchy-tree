@@ -1,8 +1,8 @@
 import React from 'react';
 import { throttle } from 'lodash';
 import './drawingView.css';
-import {getAllPicturesInFolder, getImageUrl} from '../googleDrive';
-import FileSelector from './FileSelector';
+import {getAllPicturesInFolder, getImageUrl} from '../../googleDrive';
+import FileSelector from '../FileSelector';
 import CanvasWrap from './CanvasWrap';
 import { toast } from 'react-toastify';
 
