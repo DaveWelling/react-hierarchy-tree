@@ -7,11 +7,20 @@ import Split from 'split.js';
 import Toolbar from './components/Toolbar';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from 'react-toastify';
+import {publish} from './store/eventSink';
+import {throttle} from 'lodash';
 
 const id = 'app';
 class App extends Component {
+    constructor(props){
+        super(props);
+        this.throttledPublish = throttle(publish, 200);
+    }
     componentDidMount() {
-        this.split = Split(['#splitLeft-' + id, '#splitRight-' + id], {
+        const {throttledPublish} = this;
+        const leftSide = document.querySelector('#splitLeft-'+id);
+        const rightSide = document.querySelector('#splitRight-'+id);
+        const split = this.split = Split(['#splitLeft-' + id, '#splitRight-' + id], {
             sizes: [40, 60],
             elementStyle: function(dimension, size, gutterSize) {
                 return {
@@ -34,7 +43,15 @@ class App extends Component {
                     gutter.className = `gutter gutter-${direction}`;
                 }
                 return gutter;
-            }
+            },
+            onDragEnd: (e=>throttledPublish({
+                type: 'drag_split_end',
+                drag: {
+                    sizes: split.getSizes(),
+                    leftSize: leftSide.clientWidth,
+                    rightSize: rightSide.clientWidth
+                }
+            }))
         });
     }
     render() {

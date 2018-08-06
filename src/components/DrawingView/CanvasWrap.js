@@ -1,257 +1,177 @@
 import React from 'react';
-import Atrament from './atrament';
+import { fabric } from 'fabric';
+import { throttle } from 'lodash';
+import { getImageUrl } from '../../googleDrive';
+import { toast } from 'react-toastify';
+import {subscribe} from '../../store/eventSink';
 
 export default class CanvasWrap extends React.Component {
     constructor(props) {
         super(props);
         this.onResize = this.onResize.bind(this);
         this.onChange = this.onChange.bind(this);
-        this.clear = this.clear.bind(this);
-        this.writeToCanvas = this.writeToCanvas.bind(this);
+        this.onChange = throttle(this.onChange, 1000);
+        this.loadBackgroundImage = this.loadBackgroundImage.bind(this);
     }
 
     componentDidMount() {
-        const canvas = this.canvas = document.querySelector(`#drawingView_${this.props.id}`);
-        this.panAndZoom = initPanAndZoom(canvas);
-        const resizeObserver = new ResizeObserver(event => this.onResize(event));
-        resizeObserver.observe(canvas);
-        this.onResize();
+        const originalCanvas = document.querySelector(`#drawingView_${this.props.id}`);
+        const parentElement = originalCanvas.parentElement;
+        const { canvasSettings, backgroundImage } = this.props;
+        const canvas = (this.canvas = new fabric.Canvas(originalCanvas, {
+            isDrawingMode: canvasSettings.mode === 'draw'
+        }));
+        if (backgroundImage) {
+            this.loadBackgroundImage(backgroundImage);
+        } else {
+            if (canvas.backgroundImage) {
+                canvas.setBackgroundImage(undefined);
+            }
+        }
+        canvas.freeDrawingBrush.width = parseInt(canvasSettings.width, 10) || 1;
+        canvas.freeDrawingBrush.color = canvasSettings.color;
+        canvas.on('object:modified', this.onChange);
+        canvas.on('object:removed', this.onChange);
+        canvas.on('object:added', this.onChange);
+        canvas.on('mouse:down:before', function(opt) {
+            const evt = opt.e;
+            if (evt.shiftKey) {
+                this.isDrawingMode = false;
+            }
+        });
+        canvas.on('mouse:down', function(opt) {
+            var evt = opt.e;
+            if (evt.shiftKey === true) {
+                this.isDragging = true;
+                this.selection = false;
+                this.lastPosX = evt.clientX;
+                this.lastPosY = evt.clientY;
+            }
+        });
+        canvas.on('mouse:move', function(opt) {
+            if (this.isDragging) {
+                var e = opt.e;
+                this.viewportTransform[4] += e.clientX - this.lastPosX;
+                this.viewportTransform[5] += e.clientY - this.lastPosY;
+                this.requestRenderAll();
+                this.lastPosX = e.clientX;
+                this.lastPosY = e.clientY;
+            }
+        });
+        canvas.on('mouse:up', function(opt) {
+            this.isDrawingMode = canvasSettings.mode === 'draw';
+            this.isDragging = false;
+            this.selection = true;
+        });
+        canvas.on('mouse:wheel', function(opt) {
+            var delta = opt.e.deltaY;
+            var pointer = canvas.getPointer(opt.e);
+            var zoom = canvas.getZoom();
+            zoom = zoom + delta / 500;
+            if (zoom > 20) zoom = 20;
+            if (zoom < 0.01) zoom = 0.01;
+            canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+            opt.e.preventDefault();
+            opt.e.stopPropagation();
+        });
+
+        const resizeObserver = (this.resizeObserver = new ResizeObserver(event => this.onResize(event)));
+        resizeObserver.observe(parentElement);
+        this.onResize([{ target: parentElement }]); // Set the initial size to match parent interior;
+
+        if (this.props.drawing) {
+            canvas.loadFromJSON(this.props.drawing);
+        }
+        this.splitUnsubscribe = subscribe('drag_split_end', action=>{
+            canvas.setWidth(action.rightSize * (action.sizes[1]/100));
+        })
+    }
+
+    componentWillUnmount() {
+        this.canvas.dispose();
+        this.canvas.disposed = true;
+        this.resizeObserver.disconnect();
+        this.splitUnsubscribe();
+
     }
 
     componentDidUpdate(prevProps) {
-        const { drawing, canvasSettings } = this.props;
+        const { drawing, canvasSettings, backgroundImage } = this.props;
         Object.keys(canvasSettings).forEach(key => {
             if (prevProps.canvasSettings[key] !== canvasSettings[key]) {
-                this.atrament[key] = canvasSettings[key];
+                switch (key) {
+                    case 'weight':
+                        this.canvas.freeDrawingBrush.width = parseInt(canvasSettings[key], 10) || 1;
+                        break;
+                    case 'mode':
+                        this.canvas.isDrawingMode = canvasSettings[key] === 'draw';
+                        break;
+                    case 'color':
+                        this.canvas.freeDrawingBrush.color = canvasSettings[key];
+                        break;
+                    default:
+                        break;
+                }
             }
         });
         if (prevProps.drawing !== drawing) {
-            this.writeToCanvas(this.canvas, drawing);
-        }
-    }
-
-    clear() {
-        if (this.atrament) this.atrament.clear();
-        if (this.canvas) {
-            var ctx = this.canvas.getContext('2d');
-            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        }
-    }
-
-    writeToCanvas(canvas, drawing, clear = true) {
-        if (drawing === undefined) {
-            this.clear();
-            return;
-        }
-
-        var ctx = canvas.getContext('2d');
-        const image = new Image();
-        const {draw} = this.panAndZoom;
-        image.onload = function() {
-            if (clear) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (drawing === undefined) {
+                this.canvas.clear();
+            } else {
+                this.canvas.loadFromJSON(drawing);
             }
-            draw(image); // draw the new image to the screen
-        };
-        image.src = drawing;
+        }
+        if (backgroundImage) {
+            this.loadBackgroundImage(backgroundImage);
+        } else {
+            if (this.canvas.backgroundImage) {
+                this.canvas.setBackgroundImage(undefined,this.canvas.renderAll.bind(this.canvas));
+            }
+        }
     }
-    onResize() {
-        const { drawing } = this.props;
-        const rect = this.canvas.parentNode.getBoundingClientRect();
-        this.canvas.height = rect.height - 44;
-        this.canvas.width = rect.width;
-        this.atrament = new Atrament(this.canvas, this.canvas.width, this.canvas.height);
-        Object.keys(this.props.canvasSettings).forEach(key => {
-            this.atrament[key] = this.props.canvasSettings[key];
-        });
-        this.writeToCanvas(this.canvas, drawing);
+    loadBackgroundImage(imageFile) {
+        const { canvas } = this;
+
+        getImageUrl(imageFile.id)
+            .then(dataUrl => {
+                if (this.canvas.disposed) return; // in case callback returns after unmount
+                fabric.Image.fromURL(dataUrl, function(img) {
+                    const iWidth = img.width;
+                    const iHeight = img.height;
+                    const cWidth = canvas.width;
+                    const cHeight = canvas.height;
+                    if (cWidth * iHeight > iWidth * cHeight) {
+                        img.scaleToHeight(cHeight);
+                    } else {
+                        img.scaleToWidth(cWidth);
+                    }
+                    canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
+                        excludeFromExport: true,
+                        // Needed to position backgroundImage at 0/0
+                        originX: 'left',
+                        originY: 'top'
+                    });
+                });
+            })
+            .catch(err => {
+                toast('An error occurred while getting the file from google drive.');
+                console.error(err.stack || err.message || JSON.stringify(err, null, 3));
+            });
     }
-    onChange() {
-        const drawing = this.atrament.toImage();
-        const image = new Image();
-        const {setImage} = this.panAndZoom;
-        image.onload = function() {
-            setImage(image);
-        };
-        image.src = drawing;
-        this.props.onChange(drawing);
+
+    onResize(e) {
+        if (e.length > 1) throw new Error('Invalid resize event parameters on CanvasWrap');
+        const rect = e[0].target.getBoundingClientRect();
+        this.canvas.setWidth(rect.width);
+        this.canvas.setHeight(rect.height - 44);
+        this.canvas.calcOffset();
     }
+
+    onChange(e) {
+        this.props.onChange(this.canvas.toObject());
+    }
+
     render() {
-        return <canvas id={'drawingView_' + this.props.id} onTouchEnd={this.onChange} onMouseUp={this.onChange} />;
+        return <canvas id={'drawingView_' + this.props.id} />;
     }
-}
-
-
-function initPanAndZoom(canvas) {
-    var ctx = canvas.getContext('2d');
-    trackTransforms(ctx);
-    let imageToDraw;
-    function setImage(image){
-        imageToDraw = image;
-    }
-    function redraw(image) {
-        if (image) {
-            imageToDraw = image;
-        }
-        if (!imageToDraw) return;
-
-        // Clear the entire canvas
-        var p1 = ctx.transformedPoint(0, 0);
-        var p2 = ctx.transformedPoint(canvas.width, canvas.height);
-        ctx.clearRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
-
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.restore();
-
-        // ctx.mozImageSmoothingEnabled = true;
-        // ctx.webkitImageSmoothingEnabled = true;
-        // ctx.msImageSmoothingEnabled = true;
-        // ctx.imageSmoothingEnabled = true;
-
-        ctx.drawImage(imageToDraw, 0, 0);
-    }
-
-    var lastX = canvas.width / 2,
-        lastY = canvas.height / 2;
-
-    var dragStart, dragged;
-
-    canvas.addEventListener(
-        'mousedown',
-        function(evt) {
-            if (evt.shiftKey) {
-                document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body.style.userSelect =
-                    'none';
-                lastX = evt.offsetX || evt.pageX - canvas.offsetLeft;
-                lastY = evt.offsetY || evt.pageY - canvas.offsetTop;
-                dragStart = ctx.transformedPoint(lastX, lastY);
-                dragged = false;
-            }
-        },
-        false
-    );
-
-    canvas.addEventListener(
-        'mousemove',
-        function(evt) {
-            lastX = evt.offsetX || evt.pageX - canvas.offsetLeft;
-            lastY = evt.offsetY || evt.pageY - canvas.offsetTop;
-            dragged = true;
-            if (dragStart) {
-                var pt = ctx.transformedPoint(lastX, lastY);
-                ctx.translate(pt.x - dragStart.x, pt.y - dragStart.y);
-                redraw();
-            }
-        },
-        false
-    );
-
-    canvas.addEventListener(
-        'mouseup',
-        function(evt) {
-            dragStart = null;
-            if (!dragged) zoom(evt.shiftKey ? -1 : 1);
-        },
-        false
-    );
-
-    var scaleFactor = 1.1;
-
-    var zoom = function(clicks) {
-        var pt = ctx.transformedPoint(lastX, lastY);
-        ctx.translate(pt.x, pt.y);
-        var factor = Math.pow(scaleFactor, clicks);
-        ctx.scale(factor, factor);
-        ctx.translate(-pt.x, -pt.y);
-        redraw();
-    };
-
-    var handleScroll = function(evt) {
-        var delta = evt.wheelDelta ? evt.wheelDelta / 40 : evt.detail ? -evt.detail : 0;
-        if (delta) zoom(delta);
-        return evt.preventDefault() && false;
-    };
-
-    canvas.addEventListener('DOMMouseScroll', handleScroll, false);
-    canvas.addEventListener('mousewheel', handleScroll, false);
-
-    return {
-        draw: redraw,
-        setImage
-    };
-};
-
-
-// Adds ctx.getTransform() - returns an SVGMatrix
-// Adds ctx.transformedPoint(x,y) - returns an SVGPoint
-function trackTransforms(ctx) {
-    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    var xform = svg.createSVGMatrix();
-    ctx.getTransform = function() {
-        return xform;
-    };
-
-    var savedTransforms = [];
-    var save = ctx.save;
-    ctx.save = function() {
-        savedTransforms.push(xform.translate(0, 0));
-        return save.call(ctx);
-    };
-
-    var restore = ctx.restore;
-    ctx.restore = function() {
-        xform = savedTransforms.pop();
-        return restore.call(ctx);
-    };
-
-    var scale = ctx.scale;
-    ctx.scale = function(sx, sy) {
-        xform = xform.scaleNonUniform(sx, sy);
-        return scale.call(ctx, sx, sy);
-    };
-
-    var rotate = ctx.rotate;
-    ctx.rotate = function(radians) {
-        xform = xform.rotate((radians * 180) / Math.PI);
-        return rotate.call(ctx, radians);
-    };
-
-    var translate = ctx.translate;
-    ctx.translate = function(dx, dy) {
-        xform = xform.translate(dx, dy);
-        return translate.call(ctx, dx, dy);
-    };
-
-    var transform = ctx.transform;
-    ctx.transform = function(a, b, c, d, e, f) {
-        var m2 = svg.createSVGMatrix();
-        m2.a = a;
-        m2.b = b;
-        m2.c = c;
-        m2.d = d;
-        m2.e = e;
-        m2.f = f;
-        xform = xform.multiply(m2);
-        return transform.call(ctx, a, b, c, d, e, f);
-    };
-
-    var setTransform = ctx.setTransform;
-    ctx.setTransform = function(a, b, c, d, e, f) {
-        xform.a = a;
-        xform.b = b;
-        xform.c = c;
-        xform.d = d;
-        xform.e = e;
-        xform.f = f;
-        return setTransform.call(ctx, a, b, c, d, e, f);
-    };
-
-    var pt = svg.createSVGPoint();
-    ctx.transformedPoint = function(x, y) {
-        pt.x = x;
-        pt.y = y;
-        return pt.matrixTransform(xform.inverse());
-    };
 }

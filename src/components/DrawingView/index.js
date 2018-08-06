@@ -1,29 +1,23 @@
 import React from 'react';
-import { throttle } from 'lodash';
 import './drawingView.css';
-import {getAllPicturesInFolder, getImageUrl} from '../../googleDrive';
+import {getAllPicturesInFolder, saveNewImage} from '../../googleDrive';
 import FileSelector from '../FileSelector';
 import CanvasWrap from './CanvasWrap';
-import { toast } from 'react-toastify';
 
 class DrawingView extends React.Component {
     constructor(props) {
         super(props);
         this.onClear = this.onClear.bind(this);
         this.onChange = this.onChange.bind(this);
-        this.onChange = throttle(this.onChange, 1000);
         this.onSettingsChange = this.onSettingsChange.bind(this);
         this.setBackground = this.setBackground.bind(this);
         this.openFile = this.openFile.bind(this);
         this.cancelOpen = this.cancelOpen.bind(this);
         this.state = {
             canvasSettings: {
-                weight: .05,
-                smoothing: false,
-                adaptiveStroke: true,
+                weight: 1,
                 mode: 'draw',
-                color: '#ffffff',
-                opacity: 1
+                color: '#ffffff'
             }
         }
     }
@@ -68,13 +62,26 @@ class DrawingView extends React.Component {
     }
     openFile(file){
         this.setState({files: undefined}); // remove files to close dialog
-        getImageUrl(file.id).then(dataUrl=>{
-            this.writeToCanvas(this.canvas, dataUrl, false);
-        }).catch(err=>{
-            toast('An error occurred while getting the file from google drive.');
-            console.error(err.stack || err.message || JSON.stringify(err, null, 3));
-        });
+        if (typeof file === 'string') {
+            this.props.onChange({backgroundImage: file});
+        } else {
 
+            if (file) {
+                // TODO - Move getImageUrl(imageFile.id) out of CanvasWrap so can
+                // use it here.
+
+                var reader  = new FileReader();
+
+                reader.addEventListener("load", function () {
+                    preview.src = reader.result;
+                }, false);
+
+                reader.readAsDataURL(file);
+                saveNewImage(file, this.props.projectName).then(googleFile=>{
+                    this.props.onChange({backgroundImage: googleFile});
+                })
+            }
+        }
     }
     cancelOpen(){
         // remove files to close dialog
@@ -86,7 +93,7 @@ class DrawingView extends React.Component {
         const {onSettingsChange, onClear, setBackground, openFile, cancelOpen, onChange} = this;
         return (
             <div id='canvasContainer' className="fullHeight drawingView">
-                <CanvasWrap id={this.props.model._id} onChange={onChange} canvasSettings={canvasSettings} drawing={this.props.model.drawing} />
+                <CanvasWrap id={this.props.model._id} onChange={onChange} backgroundImage={this.props.model.backgroundImage} canvasSettings={canvasSettings} drawing={this.props.model.drawing} />
                 <div className="canvasToolbar">
                     <button className="canvasButton" onClick={onClear}>
                         <i className="material-icons">delete</i>
@@ -98,11 +105,11 @@ class DrawingView extends React.Component {
                     <input
                         name="weight"
                         type="range"
-                        min=".05"
+                        min="1"
                         max="40"
                         onChange={onSettingsChange}
                         value={that.state.canvasSettings.weight}
-                        step="0.05"
+                        step="1"
                         autoComplete="off"
                     />
                     {/* <label>Smoothing</label>
