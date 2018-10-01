@@ -1,0 +1,17 @@
+.line {
+    display: flex;
+    flex-direction: column;
+}
+.word {
+    display: flex;
+    flex-direction: column;
+    padding: .25em;
+    border-right: thin solid white;
+}
+.words {
+    display: flex;
+    flex-direction: row;
+}
+.word:last-child {
+    border-right: none;
+}

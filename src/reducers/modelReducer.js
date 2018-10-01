@@ -2,6 +2,12 @@
 export default function getModelReducer(initialProjectModelState) {
     return function ModelReducer(state=initialProjectModelState, action){
         switch (action.type) {
+            case 'update_current': {
+                return {
+                    ...state,
+                    model: action.update.model
+                }
+            }
             case 'change_project_name': {
                 return {
                     ...state,

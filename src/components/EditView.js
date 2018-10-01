@@ -20,6 +20,15 @@ class EditView extends React.Component {
                 changes
             }
         });
+        dispatch({
+            type: 'update_current',
+            update: {
+                model: {
+                    ...this.props.model,
+                    ...changes
+                }
+            }
+        })
     }
     render() {
         const {model, projectName} = this.props;
