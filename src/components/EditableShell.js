@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import propTypes from 'prop-types';
 import escapeHTML from 'escape-html';
 
-let saveSelection, restoreSelection;
+let getSelection, setSelection;
 // Implement editablecontent to return the necessary methods and properties
 // for TreeText
 export default class EditableShell extends React.Component {
@@ -45,7 +45,7 @@ export default class EditableShell extends React.Component {
         // dangerouslySetInnerHTML removes existing selections.
         // They must be restored in here
         if (this.domElementRef && this.selection) {
-            restoreSelection(this.domElementRef, this.selection);
+            setSelection(this.domElementRef, this.selection);
         }
     }
 
@@ -73,13 +73,13 @@ export default class EditableShell extends React.Component {
     setSelectionRange(selectionStart, selectionEnd) {
         if (!this.domElementRef) return;
         this.selection = {selectionStart, selectionEnd};
-        restoreSelection(this.domElementRef, {selectionStart, selectionEnd});
+        setSelection(this.domElementRef, {selectionStart, selectionEnd});
     }
 
     onInput(e) {
         this._supportsInput = true;
         var text = e.target.textContent.trim();
-        this.selection= saveSelection(this.domElementRef);
+        this.selection= getSelection(this.domElementRef);
         if (!text && text !== this.props.model.title) {
             this.props.onChange({
                 target: {
@@ -99,20 +99,20 @@ export default class EditableShell extends React.Component {
     }
 
     onKeyDown(e){
-        this.selection= saveSelection(this.domElementRef);
+        this.selection= getSelection(this.domElementRef);
         e.target.selectionStart = this.selection.selectionStart;
         e.target.selectionEnd = this.selection.selectionEnd;
         this.props.onKeyDown(e);
     }
 
     onMouseUp(){
-        this.selection= saveSelection(this.domElementRef);
+        this.selection= getSelection(this.domElementRef);
     }
 
     onKeyUp(e){
         // dangerouslySetInnerHTML removes existing selections.
         // They must be restored in componentDidUpdate
-        this.selection= saveSelection(this.domElementRef);
+        this.selection= getSelection(this.domElementRef);
     }
 
     _replaceCurrentSelection(data) {
@@ -145,7 +145,7 @@ export default class EditableShell extends React.Component {
     }
 
     onFocus(e){
-        this.selection = saveSelection(this.domElementRef);
+        this.selection = getSelection(this.domElementRef);
         this.props.onFocus({
             target: {
                 value: this.props.model,
@@ -196,7 +196,7 @@ EditableShell.propTypes = {
 
 
 if (window.getSelection && document.createRange) {
-    saveSelection = function(containerEl) {
+    getSelection = function(containerEl) {
         let winSelection = window.getSelection();
         if (winSelection.length){
             var range = window.getSelection().getRangeAt(0);
@@ -221,7 +221,7 @@ if (window.getSelection && document.createRange) {
         }
     };
 
-    restoreSelection = function(containerEl, savedSel) {
+    setSelection = function(containerEl, savedSel) {
         var charIndex = 0, range = document.createRange();
         range.setStart(containerEl, 0);
         range.collapse(true);
@@ -252,7 +252,7 @@ if (window.getSelection && document.createRange) {
         sel.addRange(range);
     }
 } else if (document.selection && document.body.createTextRange) {
-    saveSelection = function(containerEl) {
+    getSelection = function(containerEl) {
         var selectedTextRange = document.selection.createRange();
         var preSelectionTextRange = document.body.createTextRange();
         preSelectionTextRange.moveToElementText(containerEl);
@@ -265,7 +265,7 @@ if (window.getSelection && document.createRange) {
         }
     };
 
-    restoreSelection = function(containerEl, savedSel) {
+    setSelection = function(containerEl, savedSel) {
         var textRange = document.body.createTextRange();
         textRange.moveToElementText(containerEl);
         textRange.collapse(true);

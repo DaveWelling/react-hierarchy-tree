@@ -61,25 +61,21 @@ class DrawingView extends React.Component {
         })
     }
     openFile(file){
+        const {canvasRef} = this;
         this.setState({files: undefined}); // remove files to close dialog
         if (typeof file === 'string') {
             this.props.onChange({backgroundImage: file});
         } else {
-
             if (file) {
-                // TODO - Move getImageUrl(imageFile.id) out of CanvasWrap so can
-                // use it here.
-
-                var reader  = new FileReader();
-
-                reader.addEventListener("load", function () {
-                    preview.src = reader.result;
-                }, false);
-
-                reader.readAsDataURL(file);
-                saveNewImage(file, this.props.projectName).then(googleFile=>{
-                    this.props.onChange({backgroundImage: googleFile});
-                })
+                if (canvasRef) {
+                    if (file instanceof Blob) {
+                        saveNewImage(file, this.props.projectName).then(googleFile=>{
+                            this.props.onChange({backgroundImage: googleFile});
+                        })
+                    } else {
+                        this.props.onChange({backgroundImage: file});
+                    }
+                }
             }
         }
     }
@@ -93,7 +89,7 @@ class DrawingView extends React.Component {
         const {onSettingsChange, onClear, setBackground, openFile, cancelOpen, onChange} = this;
         return (
             <div id='canvasContainer' className="fullHeight drawingView">
-                <CanvasWrap id={this.props.model._id} onChange={onChange} backgroundImage={this.props.model.backgroundImage} canvasSettings={canvasSettings} drawing={this.props.model.drawing} />
+                <CanvasWrap id={this.props.model._id} ref={(r)=>this.canvasRef = r} onChange={onChange} backgroundImage={this.props.model.backgroundImage} canvasSettings={canvasSettings} drawing={this.props.model.drawing} />
                 <div className="canvasToolbar">
                     <button className="canvasButton" onClick={onClear}>
                         <i className="material-icons">delete</i>

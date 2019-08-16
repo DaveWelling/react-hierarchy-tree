@@ -11,7 +11,8 @@ class EditView extends React.Component {
     }
 
     onChange(changes){
-        const {dispatch, model:{_id}} = this.props;
+        const {dispatch, model, model:{_id}} = this.props;
+
 
         dispatch({
             type: 'update_project_model',

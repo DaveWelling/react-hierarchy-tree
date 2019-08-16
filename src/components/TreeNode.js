@@ -19,7 +19,6 @@ class TreeNode extends React.Component {
         this.tryCollapse = this.tryCollapse.bind(this);
         this.tryExpand = this.tryExpand.bind(this);
         this.tryChildExpand = this.tryChildExpand.bind(this);
-        this.nodeClicked = this.nodeClicked.bind(this);
         this.childrenTryCollapses = [];
         this.childrenTryExpands = [];
         this.onValueChange = this.onValueChange.bind(this);
@@ -128,6 +127,7 @@ class TreeNode extends React.Component {
             // }
           });
     }
+
     dragMoveListener(e) {
         var target = e.target,
             // keep the dragged position in the data-x/data-y attributes
@@ -254,7 +254,7 @@ class TreeNode extends React.Component {
     }
     render() {
         let that = this;
-        const { nodeClicked, onValueChange, onTypeChange } = this;
+        const { onValueChange, onTypeChange } = this;
         that.childrenTryCollapses = []; //remove previous tryCollapse pointers
         that.childrenTryExpands = [];
         let { nextSequence, label, useIcons, onClick, childrenData, data, value, collapsed, dragging } = this.props;

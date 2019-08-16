@@ -5,6 +5,7 @@
     cursor: pointer;
     display: flex;
     align-items: center;
+    flex: 1 0 auto;
 }
 
 .fileText {
@@ -18,6 +19,7 @@
     margin: 1em;
     padding: 1em;
    border: slategray thin solid;
+   overflow: auto;
 }
 
 .hiddenImage {

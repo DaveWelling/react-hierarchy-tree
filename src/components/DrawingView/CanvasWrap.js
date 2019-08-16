@@ -4,6 +4,7 @@ import { throttle } from 'lodash';
 import { getImageUrl } from '../../googleDrive';
 import { toast } from 'react-toastify';
 import {subscribe} from '../../store/eventSink';
+import {debug} from 'util';
 
 export default class CanvasWrap extends React.Component {
     constructor(props) {
@@ -11,7 +12,8 @@ export default class CanvasWrap extends React.Component {
         this.onResize = this.onResize.bind(this);
         this.onChange = this.onChange.bind(this);
         this.onChange = throttle(this.onChange, 1000);
-        this.loadBackgroundImage = this.loadBackgroundImage.bind(this);
+        this.loadBackgroundImageFromGoogleFile = this.loadBackgroundImageFromGoogleFile.bind(this);
+        this.loadBackgroundImageFromDataUrl = this.loadBackgroundImageFromDataUrl.bind(this);
     }
 
     componentDidMount() {
@@ -22,7 +24,7 @@ export default class CanvasWrap extends React.Component {
             isDrawingMode: canvasSettings.mode === 'draw'
         }));
         if (backgroundImage) {
-            this.loadBackgroundImage(backgroundImage);
+            this.loadBackgroundImageFromGoogleFile(backgroundImage);
         } else {
             if (canvas.backgroundImage) {
                 canvas.setBackgroundImage(undefined);
@@ -96,7 +98,7 @@ export default class CanvasWrap extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const { drawing, canvasSettings, backgroundImage } = this.props;
+        const { drawing, canvasSettings, backgroundImage, id } = this.props;
         Object.keys(canvasSettings).forEach(key => {
             if (prevProps.canvasSettings[key] !== canvasSettings[key]) {
                 switch (key) {
@@ -114,49 +116,59 @@ export default class CanvasWrap extends React.Component {
                 }
             }
         });
-        if (prevProps.drawing !== drawing) {
+        if (prevProps.id !== id) {
             if (drawing === undefined) {
                 this.canvas.clear();
             } else {
+                this.suspendChangeReporting = true;
                 this.canvas.loadFromJSON(drawing);
+                this.suspendChangeReporting = false;
             }
         }
-        if (backgroundImage) {
-            this.loadBackgroundImage(backgroundImage);
-        } else {
+
+        if (!backgroundImage) {
             if (this.canvas.backgroundImage) {
                 this.canvas.setBackgroundImage(undefined,this.canvas.renderAll.bind(this.canvas));
             }
+        } else if (!prevProps.backgroundImage || backgroundImage.id !== prevProps.backgroundImage.id){
+            this.loadBackgroundImageFromGoogleFile(backgroundImage);
         }
     }
-    loadBackgroundImage(imageFile) {
-        const { canvas } = this;
+    loadBackgroundImageFromGoogleFile(imageFile) {
+        const { canvas, loadBackgroundImageFromDataUrl } = this;
 
         getImageUrl(imageFile.id)
             .then(dataUrl => {
-                if (this.canvas.disposed) return; // in case callback returns after unmount
-                fabric.Image.fromURL(dataUrl, function(img) {
-                    const iWidth = img.width;
-                    const iHeight = img.height;
-                    const cWidth = canvas.width;
-                    const cHeight = canvas.height;
-                    if (cWidth * iHeight > iWidth * cHeight) {
-                        img.scaleToHeight(cHeight);
-                    } else {
-                        img.scaleToWidth(cWidth);
-                    }
-                    canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
-                        excludeFromExport: true,
-                        // Needed to position backgroundImage at 0/0
-                        originX: 'left',
-                        originY: 'top'
-                    });
-                });
+                if (canvas.disposed) return; // in case callback returns after unmount
+                loadBackgroundImageFromDataUrl(dataUrl);
             })
             .catch(err => {
                 toast('An error occurred while getting the file from google drive.');
                 console.error(err.stack || err.message || JSON.stringify(err, null, 3));
             });
+    }
+    loadBackgroundImageFromDataUrl(dataUrl){
+        const { canvas } = this;
+        const that = this;
+        fabric.Image.fromURL(dataUrl, function(img) {
+            const iWidth = img.width;
+            const iHeight = img.height;
+            const cWidth = canvas.width;
+            const cHeight = canvas.height;
+            if (cWidth * iHeight > iWidth * cHeight) {
+                img.scaleToHeight(cHeight);
+            } else {
+                img.scaleToWidth(cWidth);
+            }
+            that.suspendChangeReporting = true;
+            canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
+                excludeFromExport: true,
+                // Needed to position backgroundImage at 0/0
+                originX: 'left',
+                originY: 'top'
+            });
+            that.suspendChangeReporting = false;
+        });
     }
 
     onResize(e) {
@@ -168,6 +180,8 @@ export default class CanvasWrap extends React.Component {
     }
 
     onChange(e) {
+        if (this.suspendChangeReporting) return;
+
         this.props.onChange(this.canvas.toObject());
     }
 

@@ -31,7 +31,7 @@ export default function authorize() {
                 if (err.error === 'idpiframe_initialization_failed') {
                     message = 'It looks like you may have disabled cookies.  You need them to log into Google Drive with this application.';
                 }
-                reject(message + '  Details: ' + err.message || err);
+                reject(message + '  Details: ' + err.details || err.message || JSON.stringify(err));
             });
 
             function updateSigninStatus(isSignedIn) {
