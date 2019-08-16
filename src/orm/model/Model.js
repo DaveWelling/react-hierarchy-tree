@@ -75,7 +75,7 @@ export class Model extends ValidatingModel{
                 const model = Model.withId(action.ensureExpanded._id);
                 function expandToRoot(expandingModel){
                     expandingModel.ui.collapsed = false;
-                    if (expandingModel.parent !== undefined) {
+                    if (expandingModel.parent != undefined) {
                         expandToRoot(expandingModel.parent);
                     }
                 }

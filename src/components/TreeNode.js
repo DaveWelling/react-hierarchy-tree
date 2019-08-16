@@ -267,9 +267,8 @@ class TreeNode extends React.Component {
         const ArrowRight = <div onClick={this.handleArrowClick} ><i className="material-icons tree-view_arrow">arrow_right</i></div>;
         const ArrowDown = <div onClick={this.handleArrowClick} ><i className="material-icons tree-view_arrow">arrow_drop_down</i></div>;
         let iconClass = getIconClass(data);
-        const getChildCollapseFunctions = function(connectedChild) {
-            if (connectedChild === null) return; // ignore detach of ref
-            const child = connectedChild.getWrappedInstance();
+        const getChildCollapseFunctions = function(child) {
+            if (child === null) return; // ignore detach of ref
             that.childrenTryCollapses.push(child.tryCollapse);
             that.childrenTryExpands.push(child.tryExpand);
         };
@@ -353,8 +352,9 @@ function mapStateToProps(state, ownProps) {
 const TreeNodeConnected = connect(
     mapStateToProps,
     null,
-    null,
-    { withRef: true }
+    null, {
+        forwardRef: true
+    }
 )(TreeNode);
 export default TreeNodeConnected;
 

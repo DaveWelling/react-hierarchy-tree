@@ -127,6 +127,7 @@ function mapStateToProps(state, props) {
 export default connect(
     mapStateToProps,
     null,
-    null,
-    { withRef: true }
+    null, {
+        forwardRef: true
+    }
 )(TreeText);
