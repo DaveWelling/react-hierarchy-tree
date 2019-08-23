@@ -7,6 +7,7 @@
     "build": "npm-run-all clean buildOnly",
     "buildOnly": "cross-env NODE_ENV=production webpack",
     "clean": "rimraf dist/*",
+    "deploy": "gcloud app deploy",
     "start": "node app.js",
     "startDev": "cross-env NODE_ENV=development webpack-dev-server --hot",
     "test": "mocha"
@@ -74,6 +75,7 @@
     "webpack-bundle-analyzer": "^2.13.1",
     "webpack-cli": "^3.1.1",
     "webpack-dev-server": "^3.7.2",
+    "webpack-pwa-manifest": "^4.0.0",
     "workbox-webpack-plugin": "^4.3.1"
   },
   "author": "Dave Welling",

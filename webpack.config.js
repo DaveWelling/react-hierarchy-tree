@@ -3,6 +3,8 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const webpack = require('webpack');
 const WorkboxPlugin = require('workbox-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const WebpackPwaManifest = require('webpack-pwa-manifest')
+const path = require('path');
 
 module.exports = {
     devtool: 'source-map',
@@ -133,6 +135,21 @@ module.exports = {
                     }
                 }
             ]
-        })
+        }),
+        new WebpackPwaManifest({
+            name: 'Curator',
+            short_name: 'Curator',
+            description: 'Hierarchical Editor',
+            start_url: '/index.html',
+            background_color: '#137b85',
+            theme_color: '#137b85',
+            orientation: 'any',
+            icons: [
+              {
+                src: path.resolve('src/apple-touch-icon.png'),
+                sizes: [96, 128, 192, 256, 384, 512] // multiple sizes
+              }
+            ]
+          })
     ]
 };
