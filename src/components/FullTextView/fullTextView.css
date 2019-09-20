@@ -1,0 +1,10 @@
+.fullTextView {
+    height: calc(100% - 75px);
+    display: flex;
+    flex-direction: column;
+}
+
+.editor {
+    flex-grow: 1;
+    margin: 0 1em 1em 1em;
+}

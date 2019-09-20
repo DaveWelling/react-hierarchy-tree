@@ -80,7 +80,8 @@ module.exports = {
         ]),
         new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/), // dropping locales makes moment WAY smaller.
         new webpack.DefinePlugin({
-            __PRODUCTION__: process.env.NODE_ENV === 'production'
+            __PRODUCTION__: process.env.NODE_ENV === 'production',
+            __TESTING__: false
         }),
         new HtmlWebPackPlugin({
             template: 'src/index.html',

@@ -7,6 +7,8 @@ import App from './App'
 import store, {persistor} from './store';
 import { PersistGate } from 'redux-persist/integration/react'
 import Loading from './components/Loading';
+import "core-js/stable";
+import "regenerator-runtime/runtime";
 
 render(
     (<Provider store={store}>

@@ -21,7 +21,6 @@ class TreeNode extends React.Component {
         this.tryChildExpand = this.tryChildExpand.bind(this);
         this.childrenTryCollapses = [];
         this.childrenTryExpands = [];
-        this.onValueChange = this.onValueChange.bind(this);
         this.onTypeChange = this.onTypeChange.bind(this);
     }
 
@@ -237,24 +236,9 @@ class TreeNode extends React.Component {
         }));
 
     }
-    onValueChange(newValue) {
-        const {
-            dispatch,
-            data: { _id }
-        } = this.props;
-        dispatch({
-            type: 'update_project_model',
-            update: {
-                _id,
-                changes: {
-                    title: newValue
-                }
-            }
-        });
-    }
     render() {
         let that = this;
-        const { onValueChange, onTypeChange } = this;
+        const { onTypeChange } = this;
         that.childrenTryCollapses = []; //remove previous tryCollapse pointers
         that.childrenTryExpands = [];
         let { nextSequence, label, useIcons, onClick, childrenData, data, value, collapsed, dragging } = this.props;
@@ -291,7 +275,6 @@ class TreeNode extends React.Component {
                         <TreeText
                             _id={data._id}
                             value={value}
-                            onValueChange={onValueChange}
                             nextSequence={nextSequence /* Saves a nasty lookup later*/}
                         />
                         <div className="select-container">

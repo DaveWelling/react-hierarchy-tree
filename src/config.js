@@ -1,4 +1,5 @@
 const config = {
+    defaultCollectionName: 'treenode',
     defaultModelType: 'event',
     dataTypes:[
         {title:'chapter', prettyName:'Chapter', view: 'FullTextView'},
@@ -11,4 +12,4 @@ const config = {
     googleAppId: '1022071479227'
 };
 
-export default config;
+module.exports = config;

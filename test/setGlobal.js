@@ -1,0 +1,1 @@
+global.__TESTING__ = true;

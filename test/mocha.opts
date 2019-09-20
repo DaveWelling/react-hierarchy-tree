@@ -1,0 +1,5 @@
+--require ./test/setGlobal
+--exit
+--reporter spec
+--colors
+./test/**/*.unit.js
