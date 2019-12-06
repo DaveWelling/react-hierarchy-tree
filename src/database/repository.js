@@ -27,4 +27,7 @@ module.exports = class Repository {
     find(query) {
         return query(this._privates.collection.find()).exec();
     }
+    remove(_id) {
+        return this.get(_id).then(doc=>doc.remove());
+    }
 };

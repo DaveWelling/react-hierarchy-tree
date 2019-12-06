@@ -20,15 +20,7 @@ export default class EditableShell extends React.Component {
         this.selection = {
             selectionStart: 0,
             selectionEnd: 0
-        }
-    }
-
-    shouldComponentUpdate(nextProps) {
-        var el = ReactDOM.findDOMNode(this);
-        if (nextProps.model.title !== el.innerHTML) {
-            return true;
-        }
-        return false;
+        };
     }
 
     componentWillReceiveProps(nextProps) {
@@ -41,7 +33,15 @@ export default class EditableShell extends React.Component {
         }
     }
 
-    componentDidUpdate(prevProps, prevState) {
+    shouldComponentUpdate(nextProps) {
+        const el = ReactDOM.findDOMNode(this);
+        if (nextProps.model.title !== el.innerHTML) {
+            return true;
+        }
+        return false;
+    }
+
+    componentDidUpdate() {
         // dangerouslySetInnerHTML removes existing selections.
         // They must be restored in here
         if (this.domElementRef && this.selection) {
@@ -78,7 +78,7 @@ export default class EditableShell extends React.Component {
 
     onInput(e) {
         this._supportsInput = true;
-        var text = e.target.textContent.trim();
+        const text = e.target.textContent.trim();
         this.selection= getSelection(this.domElementRef);
         if (!text && text !== this.props.model.title) {
             this.props.onChange({
@@ -109,19 +109,19 @@ export default class EditableShell extends React.Component {
         this.selection= getSelection(this.domElementRef);
     }
 
-    onKeyUp(e){
+    onKeyUp(){
         // dangerouslySetInnerHTML removes existing selections.
         // They must be restored in componentDidUpdate
         this.selection= getSelection(this.domElementRef);
     }
 
     _replaceCurrentSelection(data) {
-        var selection = window.getSelection();
-        var range = selection.getRangeAt(0);
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
         range.deleteContents();
-        var fragment = range.createContextualFragment('');
+        const fragment = range.createContextualFragment('');
         fragment.textContent = data;
-        var replacementEnd = fragment.lastChild;
+        const replacementEnd = fragment.lastChild;
         range.insertNode(fragment);
         // Set cursor at the end of the replaced content, just like browsers do.
         range.setStartAfter(replacementEnd);
@@ -133,9 +133,9 @@ export default class EditableShell extends React.Component {
     onPaste(e) {
         // handle paste manually to ensure we unset our placeholder
         e.preventDefault();
-        var data = e.clipboardData.getData('text/plain');
+        let data = e.clipboardData.getData('text/plain');
         this._replaceCurrentSelection(data);
-        var target = ReactDOM.findDOMNode(this);
+        const target = ReactDOM.findDOMNode(this);
         const newValue = escapeHTML(target.textContent);
         if (newValue !== this.props.model.title) {
             this.props.onChange({
@@ -144,7 +144,7 @@ export default class EditableShell extends React.Component {
         }
     }
 
-    onFocus(e){
+    onFocus(){
         this.selection = getSelection(this.domElementRef);
         this.props.onFocus({
             target: {
@@ -177,6 +177,7 @@ export default class EditableShell extends React.Component {
                 onPaste={onPaste}
                 onClick={onFocus}
                 onMouseUp={onMouseUp}
+                // eslint-disable-next-line react/no-danger
                 dangerouslySetInnerHTML={{
                     __html: title
                 }}
@@ -199,11 +200,11 @@ if (window.getSelection && document.createRange) {
     getSelection = function(containerEl) {
         let winSelection = window.getSelection();
         if (winSelection.length){
-            var range = window.getSelection().getRangeAt(0);
-            var preSelectionRange = range.cloneRange();
+            const range = window.getSelection().getRangeAt(0);
+            const preSelectionRange = range.cloneRange();
             preSelectionRange.selectNodeContents(containerEl);
             preSelectionRange.setEnd(range.startContainer, range.startOffset);
-            var start = preSelectionRange.toString().length;
+            const start = preSelectionRange.toString().length;
 
             return {
                 selectionStart: start,
@@ -222,14 +223,14 @@ if (window.getSelection && document.createRange) {
     };
 
     setSelection = function(containerEl, savedSel) {
-        var charIndex = 0, range = document.createRange();
+        let charIndex = 0, range = document.createRange();
         range.setStart(containerEl, 0);
         range.collapse(true);
-        var nodeStack = [containerEl], node, foundStart = false, stop = false;
+        let nodeStack = [containerEl], node, foundStart = false, stop = false;
 
         while (!stop && (node = nodeStack.pop())) {
             if (node.nodeType == 3) {
-                var nextCharIndex = charIndex + node.length;
+                const nextCharIndex = charIndex + node.length;
                 if (!foundStart && savedSel.selectionStart >= charIndex && savedSel.selectionStart <= nextCharIndex) {
                     range.setStart(node, savedSel.selectionStart - charIndex);
                     foundStart = true;
@@ -240,37 +241,37 @@ if (window.getSelection && document.createRange) {
                 }
                 charIndex = nextCharIndex;
             } else {
-                var i = node.childNodes.length;
+                let i = node.childNodes.length;
                 while (i--) {
                     nodeStack.push(node.childNodes[i]);
                 }
             }
         }
 
-        var sel = window.getSelection();
+        const sel = window.getSelection();
         sel.removeAllRanges();
         sel.addRange(range);
-    }
+    };
 } else if (document.selection && document.body.createTextRange) {
     getSelection = function(containerEl) {
-        var selectedTextRange = document.selection.createRange();
-        var preSelectionTextRange = document.body.createTextRange();
+        const selectedTextRange = document.selection.createRange();
+        const preSelectionTextRange = document.body.createTextRange();
         preSelectionTextRange.moveToElementText(containerEl);
-        preSelectionTextRange.setEndPoint("EndToStart", selectedTextRange);
-        var start = preSelectionTextRange.text.length;
+        preSelectionTextRange.setEndPoint('EndToStart', selectedTextRange);
+        const start = preSelectionTextRange.text.length;
 
         return {
             selectionStart: start,
             selectionEnd: start + selectedTextRange.text.length
-        }
+        };
     };
 
     setSelection = function(containerEl, savedSel) {
-        var textRange = document.body.createTextRange();
+        const textRange = document.body.createTextRange();
         textRange.moveToElementText(containerEl);
         textRange.collapse(true);
-        textRange.moveEnd("character", savedSel.selectionEnd);
-        textRange.moveStart("character", savedSel.selectionStart);
+        textRange.moveEnd('character', savedSel.selectionEnd);
+        textRange.moveStart('character', savedSel.selectionStart);
         textRange.select();
     };
 }

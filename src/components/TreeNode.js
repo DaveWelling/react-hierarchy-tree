@@ -234,7 +234,6 @@ class TreeNode extends React.Component {
             ...this.props.data,
             type: newType.target.value
         }));
-
     }
     render() {
         let that = this;

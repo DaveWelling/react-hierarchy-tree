@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { getModelRef } from '../orm/selector/modelSelectors';
-import { makeChildOfPreviousSibling, addChild, makeSiblingOfParent, mergeWithPreviousSibling, moveToPrevious, moveToNext, focus } from '../actions/modelActions';
+import { makeChildOfPreviousSibling, addChild, makeSiblingOfParent, mergeWithPreviousSibling, moveFocusToPrevious, moveToNext, focus } from '../actions/modelActions';
 import {get} from 'lodash';
 import EditableShell from './EditableShell';
 import {subscribe} from '../store/eventSink';
@@ -41,16 +41,18 @@ class TreeText extends React.Component {
 
     onKeyDown(e) {
         switch (e.keyCode) {
-            case 13: // Enter
+            case 13: {// Enter
                 const { addSibling } = this;
                 const offset = e.target.selectionStart;
                 setImmediate(function() { // setImmediate is necessary.  Event must finish before dispatch.
                     addSibling(offset);
                 });
                 e.preventDefault();
+                break;
+            }
             case 38: { // Arrow up
                 let {model, dispatch} = this.props;
-                dispatch(moveToPrevious(model));
+                dispatch(moveFocusToPrevious(model));
                 e.preventDefault();
                 break;
             }
@@ -67,7 +69,7 @@ class TreeText extends React.Component {
                     e.preventDefault();
                 }
                 break;
-            case 9: // Tab
+            case 9: { // Tab
                 let {_id, model, dispatch} = this.props;
                 // Save model values because they are unavailable later.
                 const { selectionStart, selectionEnd } = e.target;
@@ -81,6 +83,7 @@ class TreeText extends React.Component {
                 });
                 e.preventDefault();
                 break;
+            }
             default:
                 break;
         }
@@ -96,12 +99,12 @@ class TreeText extends React.Component {
     }
 
     onFocus(e) {
-        this.props.dispatch(focus(e.target.value));
+        //this.props.dispatch(focus(e.target.value));
     }
 
     render() {
         const { onChange, onKeyDown, onFocus } = this;
-        return <EditableShell
+        return (<EditableShell
                     ref={input => {
                         this.inputRef = input;
                     }}
@@ -112,7 +115,7 @@ class TreeText extends React.Component {
                     onKeyDown={onKeyDown}
                     onChange={onChange}
                     onFocus={onFocus}
-                />;
+        />);
     }
 }
 

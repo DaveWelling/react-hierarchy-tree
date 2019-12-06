@@ -142,6 +142,9 @@ function getSchema(collectionName) {
     if (['test', defaultCollectionName].includes(collectionName)) {
         schema.properties['parentId'] = {type: 'string', index: true };
         schema.properties.sequence = {type: 'number'};
+        schema.properties.type = {type: 'string'};
+        schema.properties.value = {type: 'object'};
+        schema.properties.title = {type: 'string'};
         schema.properties.ui = {
             type: 'object',
             properties: {
