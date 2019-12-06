@@ -31,8 +31,8 @@ class EditView extends React.Component {
             if (ViewType.default) {
                 ViewType = ViewType.default;
             }
-            toRender = (<div className='edit-view'>
-                <ViewType model={model} projectName={projectName} onChange={onChange}></ViewType>
+            toRender = (<div className="edit-view">
+                <ViewType model={model} projectName={projectName} onChange={onChange} />
             </div>);
         }
         return toRender;

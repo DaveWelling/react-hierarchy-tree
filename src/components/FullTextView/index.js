@@ -44,6 +44,7 @@ const isUnderlinedHotkey = isKeyHotkey('mod+u');
 const isCodeHotkey = isKeyHotkey('mod+`');
 
 export default class FullTextView extends React.Component {
+
     constructor(props) {
         super(props);
         this.update = throttle(this.update.bind(this), 2000, { loading: false });
@@ -340,7 +341,7 @@ export default class FullTextView extends React.Component {
                     onKeyDown={this.onKeyDown}
                     renderBlock={this.renderBlock}
                     renderMark={this.renderMark}
-                ></Editor>
+                />
             </div>
         );
     }

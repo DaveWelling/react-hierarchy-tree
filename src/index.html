@@ -21,7 +21,7 @@
     <body style="background-color: #137b85">
         <div id="app"></div>
         <script>
-            if (location.hostname !== 'localhost') {
+            if (!['localhost','novel.davewelling.com',].includes(location.hostname)) {
                 // Check that service workers are supported
                 if ('serviceWorker' in navigator) {
                     // Use the window load event to keep the page load performant

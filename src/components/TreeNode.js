@@ -46,7 +46,7 @@ class TreeNode extends React.Component {
             // call this function on every dragmove event
             onmove: this.dragMoveListener,
             // call this function on every dragend event
-            onend: function(e) {
+            onend: function() {
                 dispatch({
                     type: 'drag_project_model_end',
                     drag: {
@@ -104,17 +104,17 @@ class TreeNode extends React.Component {
             // },
             ondragenter: function (e) {
               // feedback the possibility of a drop
-              var dropzoneElement = e.target;
+              let dropzoneElement = e.target;
               dropzoneElement.classList.add('can-drop');
 
             },
             ondragleave: function (e) {
               // remove the drop feedback style
-              var dropzoneElement = e.target;
+              let dropzoneElement = e.target;
               dropzoneElement.classList.remove('can-drop');
             },
             ondrop: function (e) {
-                var dropzoneElement = e.target;
+                let dropzoneElement = e.target;
                 dropzoneElement.classList.remove('can-drop');
                 let draggedModelId = e.draggable.target.split('_')[1];
                 dispatch(makeNextSiblingOfModel(draggedModelId, that.props.data));
@@ -128,7 +128,7 @@ class TreeNode extends React.Component {
     }
 
     dragMoveListener(e) {
-        var target = e.target,
+        let target = e.target,
             // keep the dragged position in the data-x/data-y attributes
             x = (parseFloat(target.getAttribute('data-x')) || 0) + e.dx,
             y = (parseFloat(target.getAttribute('data-y')) || 0) + e.dy;
