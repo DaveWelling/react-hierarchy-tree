@@ -3,8 +3,9 @@ import { fabric } from 'fabric';
 import { throttle } from 'lodash';
 import { getImageUrl } from '../../googleDrive';
 import { toast } from 'react-toastify';
-import {subscribe} from '../../store/eventSink';
-import {debug} from 'util';
+import {subscribe} from '../../eventSink';
+import * as logging from '../../logging';
+// import {debug} from 'util';
 
 export default class CanvasWrap extends React.Component {
     constructor(props) {
@@ -86,15 +87,7 @@ export default class CanvasWrap extends React.Component {
         }
         this.splitUnsubscribe = subscribe('drag_split_end', action=>{
             canvas.setWidth(action.rightSize * (action.sizes[1]/100));
-        })
-    }
-
-    componentWillUnmount() {
-        this.canvas.dispose();
-        this.canvas.disposed = true;
-        this.resizeObserver.disconnect();
-        this.splitUnsubscribe();
-
+        });
     }
 
     componentDidUpdate(prevProps) {
@@ -134,6 +127,15 @@ export default class CanvasWrap extends React.Component {
             this.loadBackgroundImageFromGoogleFile(backgroundImage);
         }
     }
+
+    componentWillUnmount() {
+        this.canvas.dispose();
+        this.canvas.disposed = true;
+        this.resizeObserver.disconnect();
+        this.splitUnsubscribe();
+
+    }
+
     loadBackgroundImageFromGoogleFile(imageFile) {
         const { canvas, loadBackgroundImageFromDataUrl } = this;
 
@@ -144,7 +146,7 @@ export default class CanvasWrap extends React.Component {
             })
             .catch(err => {
                 toast('An error occurred while getting the file from google drive.');
-                console.error(err.stack || err.message || JSON.stringify(err, null, 3));
+                logging.error(err.stack || err.message || JSON.stringify(err, null, 3));
             });
     }
     loadBackgroundImageFromDataUrl(dataUrl){
@@ -179,10 +181,10 @@ export default class CanvasWrap extends React.Component {
         this.canvas.calcOffset();
     }
 
-    onChange(e) {
+    onChange() {
         if (this.suspendChangeReporting) return;
 
-        this.props.onChange(this.canvas.toObject());
+        this.props.onChange({ drawing: this.canvas.toObject() });
     }
 
     render() {

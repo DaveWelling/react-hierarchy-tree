@@ -1,8 +1,12 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import './drawingView.css';
 import {getAllPicturesInFolder, saveNewImage} from '../../googleDrive';
 import FileSelector from '../FileSelector';
 import CanvasWrap from './CanvasWrap';
+import * as logging from '../../logging';
+import {getRepository} from '../../database';
+import cuid from 'cuid';
 
 class DrawingView extends React.Component {
     constructor(props) {
@@ -13,24 +17,63 @@ class DrawingView extends React.Component {
         this.setBackground = this.setBackground.bind(this);
         this.openFile = this.openFile.bind(this);
         this.cancelOpen = this.cancelOpen.bind(this);
+        this.loadStateForModel = this.loadStateForModel.bind(this);
+
+        this.loadStateForModel(props.model);
+
         this.state = {
+            loading: true,
             canvasSettings: {
                 weight: 1,
                 mode: 'draw',
                 color: '#ffffff'
             }
+        };
+    }
+
+    componentDidUpdate(prevProps) {
+        if (this.props.model._id !== prevProps.model._id) {
+            this.loadStateForModel(this.props.model);
         }
     }
-    onChange(drawing) {
-        this.props.onChange({
-            drawing
+
+    loadStateForModel(model) {
+        getRepository(model.type).then(repository => {
+            // Default drawingModel with undefined drawing
+            let drawingModel = {
+                _id: cuid(),
+                modelId: model._id,
+                drawing: undefined
+            };
+            this.setState({ drawingModel, loading: true});
+            repository.find({modelId: model._id}).then(drawingModels=>{
+                if (drawingModels.length > 1) throw new Error(`There are (somehow) two ${model.type} records for ${model.title}`);
+                if (drawingModels.length === 0) {
+                    // None found - create default drawing model in database.
+                    return repository.create(drawingModel).then(() => {
+                        this.setState({ drawingModel, loading: false });
+                    });
+                } else {
+                    drawingModel = drawingModels[0];
+                    this.setState({ drawingModel, loading: false });
+                }
+            }).catch(err=>logging.error(err));
         });
     }
+
+    onChange(change) {
+        let oldModel = this.state.drawingModel;
+        let newModel = {...oldModel, ...change};
+        this.setState(change);
+        getRepository(this.props.model.type).then(repository => repository.update(newModel));
+    }
+
     onClear(){
-        this.props.onChange({
+        this.onChange({
             drawing: undefined
         });
     }
+
     onSettingsChange(e){
         let value;
         switch (e.target.name) {
@@ -38,8 +81,8 @@ class DrawingView extends React.Component {
             case 'opacity':
                 value = parseFloat(e.target.value);
                 break;
-            case "smoothing":
-            case "adaptiveStroke":
+            case 'smoothing':
+            case 'adaptiveStroke':
                 value = e.target.checked;
                 break;
             default:
@@ -51,29 +94,31 @@ class DrawingView extends React.Component {
                 ...this.state.canvasSettings,
                 [e.target.name] : value
             }
-        })
+        });
     }
+
     setBackground(){
         getAllPicturesInFolder(this.props.projectName).then(pictures=>{
             this.setState({
                 files: pictures
             });
-        })
+        });
     }
+
     openFile(file){
         const {canvasRef} = this;
         this.setState({files: undefined}); // remove files to close dialog
         if (typeof file === 'string') {
-            this.props.onChange({backgroundImage: file});
+            this.onChange({backgroundImage: file});
         } else {
             if (file) {
                 if (canvasRef) {
                     if (file instanceof Blob) {
                         saveNewImage(file, this.props.projectName).then(googleFile=>{
-                            this.props.onChange({backgroundImage: googleFile});
-                        })
+                            this.onChange({backgroundImage: googleFile});
+                        });
                     } else {
-                        this.props.onChange({backgroundImage: file});
+                        this.onChange({backgroundImage: file});
                     }
                 }
             }
@@ -85,11 +130,20 @@ class DrawingView extends React.Component {
     }
     render() {
         const that = this;
-        const { files, canvasSettings } = this.state;
+        const { files, canvasSettings, drawingModel, loading } = this.state;
         const {onSettingsChange, onClear, setBackground, openFile, cancelOpen, onChange} = this;
+        if (loading) {
+            return <h1>Loading...</h1>;
+        }
         return (
-            <div id='canvasContainer' className="fullHeight drawingView">
-                <CanvasWrap id={this.props.model._id} ref={(r)=>this.canvasRef = r} onChange={onChange} backgroundImage={this.props.model.backgroundImage} canvasSettings={canvasSettings} drawing={this.props.model.drawing} />
+            <div id="canvasContainer" className="fullHeight drawingView">
+                <CanvasWrap id={drawingModel._id}
+                    ref={(r)=>this.canvasRef = r}
+                    onChange={onChange}
+                    backgroundImage={drawingModel.backgroundImage}
+                    canvasSettings={canvasSettings}
+                    drawing={drawingModel.drawing}
+                />
                 <div className="canvasToolbar">
                     <button className="canvasButton" onClick={onClear}>
                         <i className="material-icons">delete</i>
@@ -164,5 +218,10 @@ class DrawingView extends React.Component {
         );
     }
 }
+
+DrawingView.propTypes = {
+    model: PropTypes.object,
+    projectName: PropTypes.string
+};
 
 export default DrawingView;

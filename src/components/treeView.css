@@ -1,3 +1,16 @@
 .TreeView {
-    margin: 1em;
+    margin: 0, 1em, 1em, 1em;
+}
+
+.projectName {
+    background: transparent;
+    font-size: large;
+    color: lightslategray;
+    border-style: solid;
+    border-width: 0;
+    border-color: lightslategray;
+    border-bottom-width: thin;
+    margin: .25em .25em .5em .25em;
+    padding: .1em .2em .1em .2em;
+    min-width: 7em;
 }

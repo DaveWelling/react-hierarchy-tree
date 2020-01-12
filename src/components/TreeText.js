@@ -1,13 +1,21 @@
 import React from 'react';
-import { connect } from 'react-redux';
-import { getModelRef } from '../orm/selector/modelSelectors';
-import { makeChildOfPreviousSibling, addChild, makeSiblingOfParent, mergeWithPreviousSibling, moveFocusToPrevious, moveToNext, focus } from '../actions/modelActions';
-import {get} from 'lodash';
+import PropTypes from 'prop-types';
+import {
+    makeChildOfPreviousSibling,
+    addChild,
+    valueChange,
+    makeSiblingOfParent,
+    mergeWithPreviousSibling,
+    moveFocusToPrevious,
+    moveToNext,
+    focus
+} from '../actions/modelActions';
 import EditableShell from './EditableShell';
-import {subscribe} from '../store/eventSink';
+import { subscribe } from '../eventSink';
 
 import './treeText.css';
-class TreeText extends React.Component {
+
+export default class TreeText extends React.Component {
     constructor(props) {
         super(props);
         this.onChange = this.onChange.bind(this);
@@ -15,19 +23,18 @@ class TreeText extends React.Component {
         this.addSibling = this.addSibling.bind(this);
         this.onFocus = this.onFocus.bind(this);
         this.focusIfNecessary = this.focusIfNecessary.bind(this);
-    }
-
-    componentWillMount(){
         this.unsubscribe = subscribe('focus_project_model', this.focusIfNecessary);
     }
-    componentWillUnmount(){
+
+    componentWillUnmount() {
         if (this.unsubscribe) this.unsubscribe();
     }
 
     focusIfNecessary(actionData) {
         if (!this.inputRef) return;
-        if (actionData._id === this.props.model._id &&  document.activeElement !== this.inputRef.domElementRef) {
+        if (actionData._id === this.props.model._id && document.activeElement !== this.inputRef.domElementRef) {
             this.inputRef.focus();
+            let { selectionStart, selectionEnd } = actionData;
             if (typeof selectionStart !== 'undefined') {
                 selectionEnd = selectionEnd || selectionStart;
                 this.inputRef.setSelectionRange(selectionStart, selectionEnd);
@@ -36,49 +43,55 @@ class TreeText extends React.Component {
     }
 
     onChange(e) {
-        this.props.onValueChange(e.target.value);
+        valueChange(this.props.model._id, 'title', e.target.value);
     }
 
     onKeyDown(e) {
         switch (e.keyCode) {
-            case 13: {// Enter
+            case 13: {
+                // Enter
                 const { addSibling } = this;
                 const offset = e.target.selectionStart;
-                setImmediate(function() { // setImmediate is necessary.  Event must finish before dispatch.
+                setImmediate(function() {
+                    // setImmediate is necessary.  Event must finish before dispatch.
                     addSibling(offset);
                 });
                 e.preventDefault();
                 break;
             }
-            case 38: { // Arrow up
-                let {model, dispatch} = this.props;
-                dispatch(moveFocusToPrevious(model));
+            case 38: {
+                // Arrow up
+                let { model } = this.props;
+                moveFocusToPrevious(model);
                 e.preventDefault();
                 break;
             }
-            case 40: { // Arrow down
-                let {model, dispatch} = this.props;
-                dispatch(moveToNext(model));
+            case 40: {
+                // Arrow down
+                let { model } = this.props;
+                moveToNext(model);
                 e.preventDefault();
                 break;
             }
             case 8: // Backspace
                 if (e.target.selectionStart === 0) {
-                    let {model, dispatch} = this.props;
-                    dispatch(mergeWithPreviousSibling(model));
+                    let { model } = this.props;
+                    mergeWithPreviousSibling(model);
                     e.preventDefault();
                 }
                 break;
-            case 9: { // Tab
-                let {_id, model, dispatch} = this.props;
+            case 9: {
+                // Tab
+                let { _id, model } = this.props;
                 // Save model values because they are unavailable later.
                 const { selectionStart, selectionEnd } = e.target;
                 const shiftKeyOn = e.shiftKey;
-                setImmediate(() => { // setImmediate is necessary.  Event must finish before dispatch.
+                setImmediate(() => {
+                    // setImmediate is necessary.  Event must finish before dispatch.
                     if (shiftKeyOn) {
-                        dispatch(makeSiblingOfParent(model, selectionStart, selectionEnd));
+                        makeSiblingOfParent(model, selectionStart, selectionEnd);
                     } else {
-                        dispatch(makeChildOfPreviousSibling(_id, selectionStart, selectionEnd));
+                        makeChildOfPreviousSibling(_id, selectionStart, selectionEnd);
                     }
                 });
                 e.preventDefault();
@@ -89,48 +102,36 @@ class TreeText extends React.Component {
         }
     }
 
-
     addSibling(cursorPosition) {
-        const {value, model, nextSequence, onValueChange, dispatch} = this.props;
+        const { value, model, nextSequence } = this.props;
         const newValue = value.substr(0, cursorPosition);
         const siblingValue = value.substr(cursorPosition).trim();
-        onValueChange(newValue);
-        dispatch(addChild(model, siblingValue, nextSequence, model.type));
+        valueChange(model._id, 'title', newValue);
+        addChild(model, siblingValue, nextSequence, model.type);
     }
 
     onFocus(e) {
-        //this.props.dispatch(focus(e.target.value));
+        focus(e.target.value);
     }
 
     render() {
         const { onChange, onKeyDown, onFocus } = this;
-        return (<EditableShell
-                    ref={input => {
-                        this.inputRef = input;
-                    }}
-                    id={this.props.id}
-                    type="textbox"
-                    className="tree-text"
-                    model={this.props.model}
-                    onKeyDown={onKeyDown}
-                    onChange={onChange}
-                    onFocus={onFocus}
-        />);
+        return (
+            <EditableShell
+                ref={input => {
+                    this.inputRef = input;
+                }}
+                id={this.props.id}
+                type="textbox"
+                className="tree-text"
+                model={this.props.model}
+                onKeyDown={onKeyDown}
+                onChange={onChange}
+                onFocus={onFocus}
+            />
+        );
     }
 }
-
-function mapStateToProps(state, props) {
-    const {_id} = props;
-    const model = getModelRef(state, _id);
-    const id = 'text' + _id;
-
-    return { id, model };
-}
-
-export default connect(
-    mapStateToProps,
-    null,
-    null, {
-        forwardRef: true
-    }
-)(TreeText);
+TreeText.propTypes = {
+    model: PropTypes.object
+};

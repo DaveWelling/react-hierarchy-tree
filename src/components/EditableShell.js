@@ -23,7 +23,7 @@ export default class EditableShell extends React.Component {
         };
     }
 
-    componentWillReceiveProps(nextProps) {
+    UNSAFE_componentWillReceiveProps(nextProps) {
         if (this.contentIsEmpty(nextProps.model.title) && this.props.model.title !== nextProps.model.title) {
             this.props.onChange({
                 target: {

@@ -1,23 +1,103 @@
 import React from 'react';
 import TreeNode from './TreeNode';
-import { connect } from 'react-redux';
-import {childrenForParentId} from '../orm/selector/modelSelectors';
 import './treeView.css';
-import {get} from 'lodash';
+import { getChildren } from '../actions/modelActions';
+import config from '../config';
+import database from '../database';
+import projectContext from '../projectContext';
+import { subscribe } from '../eventSink';
 
-export class TreeView extends React.Component {
+const defaultRoot = {
+    title: '',
+    _id: 'root'
+};
+
+export default class TreeView extends React.Component {
+    constructor(props) {
+        super(props);
+
+        this.onChange = this.onChange.bind(this);
+        this.modelChanged = this.modelChanged.bind(this);
+        this.loadRoot = this.loadRoot.bind(this);
+
+        this.unsubscribes = [];
+        this._private = {};
+        this.state = {
+            root: defaultRoot,
+            childrenModels: []
+        };
+
+
+        this.unsubscribes.push(subscribe('import_complete', this.loadRoot));
+        this.loadRoot();
+    }
+
+    componentWillUnmount() {
+        this.unsubscribes.forEach(unsubscribe=>unsubscribe());
+    }
+
+    loadRoot() {
+        database.getRepository(config.defaultCollectionName).then(repository=>{
+            this._private.repository = repository;
+            repository.get('root').then(root=>{
+                if (root) {
+                    this.modelChanged(root);
+                } else {
+                    repository.create(defaultRoot);
+                }
+            });
+
+
+            this.updateChildren('root');
+
+            this.unsubscribes.push(repository.onChange('root', this.modelChanged));
+            this.unsubscribes.push(repository.onParentChange('root', ()=>this.updateChildren('root')));
+        });
+    }
+    updateChildren(modelId) {
+        getChildren(modelId).then(childrenModels => {
+            this.setState({
+                childrenModels
+            });
+            if (childrenModels.length === 0) {
+                const firstModel = { title: '', parentId: 'root', type: 'summary' };
+                this._private.repository.create(firstModel);
+            }
+        });
+    }
+
+    modelChanged(root) {
+        this.setState({
+            root
+        });
+        this.context.setProjectName(root.title);
+    }
+
+    onChange(e) {
+        const title = e.currentTarget.value;
+        this._private.repository.update('root', 'title', title);
+    }
+
     render() {
-        let {childrenData} = this.props;
+        let {childrenModels, root} = this.state;
         return (<div className="TreeView">
-            {childrenData.map((d, index) => {
+            <input
+                id="projectName"
+                className="projectName"
+                placeholder="Put a project name here"
+                type="text"
+                value={root.title}
+                onChange={this.onChange}
+            />
+            {childrenModels.map((model, index) => {
                 // Saves a nasty lookup later
-                let nextSequence = childrenData[index + 1] ? childrenData[index + 1].sequence : undefined;
+                let nextSequence = childrenModels[index + 1] ? childrenModels[index + 1].sequence : undefined;
                 return (<TreeNode
-                    key={d._id}
-                    name={d.title}
-                    label={d.title}
-                    value={d.title}
-                    data={d}
+                    key={model._id}
+                    name={model.title}
+                    label={model.title}
+                    value={model.title}
+                    model={model}
                     nextSequence={nextSequence}
                 />);
             })}
@@ -25,15 +105,4 @@ export class TreeView extends React.Component {
     }
 }
 
-function mapStateToProps(state, ownProps) {
-    // Get root nodes and sort by sequence property
-
-    const rootModelId = get(state, 'project_model.rootModelId')
-    let childrenData = childrenForParentId(state, rootModelId)
-        .sort((a,b)=> a.sequence-b.sequence);
-    return {
-        childrenData
-    };
-}
-
-export default connect(mapStateToProps)(TreeView);
+TreeView.contextType = projectContext;

@@ -1,37 +1,54 @@
 const config = require('../config');
 const database = require('../database');
-const eventSink = require('../store/eventSink');
+const eventSink = require('../eventSink');
 const { defaultCollectionName } = config;
 const { getRepository } = database;
 const cuid = require('cuid');
-const get = require('lodash.get');
+const {get, set} = require('lodash');
 
 module.exports = {
-    valueChange,
-    getChildren,
-    getPreviousSibling,
-    resequenceProjectModel,
-    ensureExpandedProjectModel,
-    makeChildOfPreviousSibling,
-    moveToNext,
-    getNextSibling,
-    makeSiblingOfParent,
-    makeNextSiblingOfModel,
     addChild,
-    moveChildrenToDifferentParent,
-    removeModel,
+    ensureExpandedProjectModel,
+    findBottomVisibleChild,
+    focus,
+    getChildren,
+    getNextSibling,
+    getPreviousSibling,
+    makeChildOfPreviousSibling,
+    makeNextSiblingOfModel,
+    makeSiblingOfParent,
     mergeWithPreviousSibling,
+    moveChildrenToDifferentParent,
+    moveToNext,
     moveFocusToPrevious,
     moveValuePropertiesToNewParent,
-    findBottomVisibleChild
+    removeModel,
+    resequenceProjectModel,
+    toggleCollapse,
+    updateModel,
+    valueChange
 };
+
+async function updateModel(model, collectionName=defaultCollectionName) {
+    return getRepository(collectionName).then(repo => {
+        return repo.update(model);
+    });
+
+}
+
+async function removeModel(_id, collectionName = defaultCollectionName) {
+    return getRepository(collectionName).then(repo => {
+        return repo.remove(_id);
+    });
+}
+
 async function valueChange(_id, propertyName, value, collectionName = defaultCollectionName) {
     return getRepository(collectionName).then(repo => repo.update(_id, propertyName, value));
 }
 
 function getChildren(parentId, collectionName = defaultCollectionName) {
     return getRepository(collectionName).then(repo => {
-        return repo.find(collection => collection.where('parentId').eq(parentId));
+        return repo.find({parentId});
     });
 }
 
@@ -72,6 +89,13 @@ function getModel(_id, collectionName = defaultCollectionName) {
     return getRepository(collectionName).then(repo => repo.get(_id));
 }
 
+async function toggleCollapse(_id, collectionName = defaultCollectionName) {
+    const model = await getModel(_id, collectionName);
+    const isCollapsed = get(model, 'ui.collapsed', false);
+    set(model, 'ui.collapsed', !isCollapsed);
+    await updateModel(model, collectionName);
+}
+
 async function ensureExpandedProjectModel(_id, collectionName = defaultCollectionName) {
     const model = await getModel(_id, collectionName);
     async function expandToRoot(parentModel) {
@@ -81,13 +105,11 @@ async function ensureExpandedProjectModel(_id, collectionName = defaultCollectio
                 `The record with _id ${parentModel._id} has a parentId with the same value.  This is not allowed because it creates infinite loops.`
             );
         }
-        const expandingModel = await getRepository(collectionName).then(repo => repo.get(parentId));
+        const repo = await getRepository(collectionName);
+        const expandingModel = await repo.get(parentId);
         if (!expandingModel.ui || expandingModel.ui.collapsed) {
-            await expandingModel.update({
-                $set: {
-                    ui: { collapsed: false }
-                }
-            });
+            set(expandingModel, 'ui.collapsed', false);
+            await repo.update(expandingModel);
         }
         if (expandingModel.parentId === 'root') return;
         await expandToRoot(expandingModel);
@@ -125,11 +147,11 @@ async function makeSiblingOfParent(model, selectionStart, selectionEnd, collecti
     const newSequence = sequenceAfterPreviousParent
         ? previousParent.sequence + (sequenceAfterPreviousParent - previousParent.sequence) / 2
         : previousParent.sequence + 1;
-    await model.update({
-        $set: {
-            parentId: newParent._id,
-            sequence: newSequence
-        }
+    const repo = await getRepository(collectionName);
+    await repo.update({
+        _id,
+        parentId: newParent._id,
+        sequence: newSequence
     });
     eventSink.publish({
         type: 'focus_project_model',
@@ -150,11 +172,11 @@ async function makeNextSiblingOfModel(targetId, siblingModel, collectionName = d
     const newSequence = sequenceAfterSiblingModel
         ? siblingModel.sequence + (sequenceAfterSiblingModel - siblingModel.sequence) / 2
         : siblingModel.sequence + 1;
-    await model.update({
-        $set: {
-            parentId: siblingModel.parentId,
-            sequence: newSequence
-        }
+    const repo = await getRepository(collectionName);
+    await repo.update({
+        _id: model._id,
+        parentId: siblingModel.parentId,
+        sequence: newSequence
     });
     eventSink.publish({
         type: 'focus_project_model',
@@ -233,12 +255,6 @@ async function moveChildrenToDifferentParent(children, newParentId, collectionNa
     );
 }
 
-async function removeModel(_id, collectionName = defaultCollectionName) {
-    return getRepository(collectionName).then(repo => {
-        return repo.remove(_id);
-    });
-}
-
 async function moveValuePropertiesToNewParent(currentParentId, newParentId, collectionName = defaultCollectionName) {
     // TODO: Implement this when I have a better idea what is involved
     throw new Error('not implemented');
@@ -314,14 +330,12 @@ async function moveToNext(model, collectionName = defaultCollectionName) {
     });
 }
 
-// export function focus(model){
-//     return function(dispatch, getState) {
-//         dispatch({
-//             type: 'focus_project_model',
-//             focus: {
-//                 _id: model._id,
-//                 model
-//             }
-//         });
-//     }
-// }
+function focus(model){
+    eventSink.publish({
+        type: 'focus_project_model',
+        focus: {
+            _id: model._id,
+            model
+        }
+    });
+}

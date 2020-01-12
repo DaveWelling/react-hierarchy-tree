@@ -1,168 +1,147 @@
-const RxDB = require('rxdb');
+const lokijs = require('lokijs');
 require('core-js/stable');
 require('regenerator-runtime/runtime');
 const Repository = require('./repository');
+const { publish } = require('../eventSink');
+const logging = require('../logging');
 
 const config = require('../config');
 
+const defaultCollectionName = config.defaultCollectionName;
+let adapter, env = 'NODEJS';
+let idbAdapter;
+// eslint-disable-next-line no-undef
+if (__TESTING__) {
+    adapter = new (require('lokijs').LokiMemoryAdapter)();
+} else {
+    env = 'BROWSER';
+    idbAdapter = new (require('lokijs/src/loki-indexed-adapter'))('curatorAdapter');
+    adapter = new lokijs.LokiPartitioningAdapter(idbAdapter, { paging: true });
+}
 
-let dbPromise = null;
-const _create = async () => {
 
-    const collections = [
-        {
-            name: 'chapter',
-            schema: {
-                title: 'chapterSchema',
-                version: 0,
-                type: 'object',
-                properties: {
-                    _id: {
-                        type: 'string',
-                        primary: true
-                    },
-                    text: {
-                        type: 'object'
-                    }
-                },
-                required: ['text']
-            }
-        }
-    ];
-    console.log('DatabaseService: creating database..');
-    const db = await RxDB.create({ name: 'curator', adapter: 'idb' });
-    console.log('DatabaseService: created database');
-    window['db'] = db; // write to window for debugging
-
-    // // show leadership in title
-    // db.waitForLeadership().then(() => {
-    //     console.log('isLeader now');
-    //     document.title = '♛ ' + document.title;
-    // });
-
-    // create collections
-    console.log('DatabaseService: create collections');
-    await Promise.all(collections.map(colData => db.collection(colData)));
-
-    // hooks
-    // console.log('DatabaseService: add hooks');
-    // db.collections.heroes.preInsert(docObj => {
-    //     const { color } = docObj;
-    //     return db.collections.heroes.findOne({color}).exec().then(has => {
-    //         if (has != null) {
-    //             alert('another hero already has the color ' + color);
-    //             throw new Error('color already there');
-    //         }
-    //         return db;
-    //     });
-    // });
-
-    return db;
+let startPromise;
+const _create = async (mainFileName = 'curator', autosaveInterval = 10000) => {
+    const _mainFileName = mainFileName;
+    const startPromise = new Promise((resolve, reject)=>{
+        try {
+            let loki = new lokijs(_mainFileName, {
+                env,// eslint-disable-next-line no-undef
+                autosave: !__TESTING__,  // This will make tests hang if it is turned on.
+                autosaveInterval,
+                adapter,
+                autoload: true,
+                autoloadCallback: ()=>resolve(loki)
+            });
+        } catch(err) {reject(err);}
+    });
+    return startPromise;
 };
+
 const get = () => {
-    if (!dbPromise) dbPromise = _create();
-    return dbPromise;
+    if (!startPromise) startPromise = _create();
+    return startPromise;
 };
 
 module.exports = {
     getRepository,
-    clear,
-    get
+    purgeDatabase,
+    get,
+    loadDatabase,
+    serializeDatabase
 };
-RxDB.QueryChangeDetector.enableDebugging();
 
-const defaultCollectionName = config.defaultCollectionName;
-let adapter;
-if (__TESTING__) {
-    RxDB.plugin(require('pouchdb-adapter-memory'));
-    adapter = 'memory';
-} else {
-    RxDB.plugin(require('pouchdb-adapter-idb'));
-    adapter = 'idb';
-}
-
-const repositories = {};
-function getRepository(collection=defaultCollectionName) {
-    if (!repositories[collection]) {
-        repositories[collection] = getCollection(collection).then(col=>{
-            return new Repository(col);
-        });
-    }
-    return repositories[collection];
-}
-
-const collections = {};
-function getCollection(collectionName) {
-    if (!collections[collectionName]) {
-        collections[collectionName] = getDb().then(db=>{
-            let schema = getSchema(collectionName);
-            return db.collection({ name: collectionName, schema });
-        });
-    }
-    return collections[collectionName];
-}
-async function clear(collectionName) {
-    if (!repositories[collectionName]) return;
-    const collection  = await collections[collectionName];
-    await collection.remove();
-    delete repositories[collectionName];
-    delete collections[collectionName];
-}
-
-let db;
-function getDb() {
-    if (!db) {
-        db = RxDB.create({ name: 'curator', adapter });
-    }
-    return db;
-}
-
-function createCollection(db, collection) {
-    let schema = getSchema(collection);
-    return db.collection({ name: collection, schema });
-}
-
-function getSchema(collectionName) {
-    let schema = {
-        title: `${collectionName}Schema`,
-        version: 0,
-        type: 'object',
-        properties: {
-            _id: {
-                type: 'string',
-                primary: true
-            }
+let repositories = {};
+function getCollection(collectionName=defaultCollectionName) {
+    return get().then(loki=>{
+        let collection = loki.getCollection(collectionName);
+        if (!collection) {
+            collection = loki.addCollection(collectionName, {unique:['_id']});
         }
-    };
+        return collection;
+    });
+}
 
-    if (collectionName === 'test') {
-        schema.properties['hi'] = {type: 'string'};
+function getRepository(collectionName) {
+    if (!repositories[collectionName]) {
+        repositories[collectionName] = getCollection(collectionName).then(collection=>{
+            return new Repository(collection);
+        });
     }
+    return repositories[collectionName];
+}
 
-    if (['test', defaultCollectionName].includes(collectionName)) {
-        schema.properties['parentId'] = {type: 'string', index: true };
-        schema.properties.sequence = {type: 'number'};
-        schema.properties.type = {type: 'string'};
-        schema.properties.value = {type: 'object'};
-        schema.properties.title = {type: 'string'};
-        schema.properties.ui = {
-            type: 'object',
-            properties: {
-                collapsed: {
-                    type: 'boolean'
+async function purgeDatabase() {
+    return startPromise.then(loki=>{
+        repositories = {};
+        loki.listCollections().forEach(collection=>{
+            loki.removeCollection(collection.name);
+        });
+        return new Promise((resolve, reject)=>{
+            loki.saveDatabase(err=>{
+                if (err) reject(err);
+                resolve(loki);
+            });
+        });
+    });
+}
+
+async function deleteDatabase(mainFileName = 'curator') {
+    return startPromise.then(loki=>{
+        repositories = {};
+        return new Promise((resolve,reject)=>{
+            try {
+                if (idbAdapter) {
+                    idbAdapter.deleteDatabase(mainFileName);
+                    idbAdapter.deleteDatabasePartitions(mainFileName);
+                    resolve(loki);
+                } else {
+                    loki.deleteDatabase(err=>{
+                        if (err) reject(err);
+                        resolve(loki);
+                    });
+                }
+            } catch (error) {
+                reject(error);
+            }
+        });
+    });
+}
+
+async function loadDatabase(databaseJson, mainFileName = 'curator') {
+    return deleteDatabase(mainFileName).then(loki=>{
+        const newStartPromise = new Promise((resolve, reject)=>{
+            function finishSave(err) {
+                if (err) {
+                    logging.error('Error while loading database from import:', err);
+                } else {
+                    startPromise = newStartPromise;
+                    publish({
+                        type: 'import_complete',
+                        import: {}
+                    });
+                    resolve(loki);
                 }
             }
-        };
-        schema.required = ['parentId', 'sequence'];
-    }
-
-    if (collectionName === defaultCollectionName) {
-        schema.properties['text'] = { type: 'object'};
-    }
-
-    return schema;
+            try {
+                loki.autoloadCallback = ()=>resolve(loki);
+                loki.loadJSON(databaseJson);
+                loki.collections.forEach(collection=>collection.dirty=true);
+                if (idbAdapter) {
+                    adapter.exportDatabase(mainFileName, loki, finishSave);
+                } else {
+                    loki.saveDatabase(finishSave);
+                }
+            } catch (err) {
+                reject(err);
+            }
+        });
+        return newStartPromise;
+    });
 }
 
-
-
-
+async function serializeDatabase(){
+    return startPromise.then(loki=>{
+        return loki.serialize();
+    });
+}

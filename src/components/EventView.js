@@ -1,6 +1,5 @@
 import React from 'react';
 import DatePicker from 'react-datepicker';
-import {debounce} from 'lodash'
 import moment from 'moment';
 import './editView.css';
 import './eventView.css';
@@ -33,7 +32,7 @@ export default class EventView extends React.Component {
 
         const {onChange} = this;
         timing = timing || moment();
-        return <form className="fullHeight" >
+        return (<form className="fullHeight" >
             <DatePicker
                 onChange={onChange}
                 selected={timing}
@@ -43,6 +42,6 @@ export default class EventView extends React.Component {
                 dateFormat="LLL"
                 timeCaption="time"/>
             <FullTextView text={description} onChange={this.onChange}/>
-        </form>;
+        </form>);
     }
 }

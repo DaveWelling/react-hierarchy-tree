@@ -1,19 +1,17 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import './toolbar.css';
 import { toast } from 'react-toastify';
-import { get } from 'lodash';
-import { persistor } from '../store';
 import { saveGoogleDriveFile, openGoogleDriveFile, getAllJsonInFolder } from '../googleDrive';
-import { clearState } from '../actions/globalActions';
 import FileSelector from './FileSelector';
+import projectContext from '../projectContext';
+import {serializeDatabase, loadDatabase} from '../database';
+const log = require('../logging');
 
-class Toolbar extends React.Component {
+export default class Toolbar extends React.Component {
     constructor(props) {
         super(props);
         this.download = this.download.bind(this);
         this.upload = this.upload.bind(this);
-        this.clear = this.clear.bind(this);
         this.save = this.save.bind(this);
         this.open = this.open.bind(this);
         this.openFile = this.openFile.bind(this);
@@ -39,17 +37,11 @@ class Toolbar extends React.Component {
         );
     }
     upload(e) {
-        const { dispatch } = this.props;
         let file = e.target.files[0];
 
         let reader = new FileReader();
         reader.onload = function(e) {
-            let ormData = JSON.parse(e.target.result);
-            persistor.purge();
-            dispatch({
-                type: 'import_app',
-                import: { data: ormData }
-            });
+            loadDatabase(e.target.result.data);
         };
         reader.onerror = function(e) {
             toast(e.message || e);
@@ -59,34 +51,33 @@ class Toolbar extends React.Component {
         }
     }
     download() {
-        const exportData = {
-            orm: this.props.ormData,
-            rootModelId: this.props.rootModelId,
-            projectName: this.props.projectName
-        };
-        let blob = new Blob([JSON.stringify(exportData, null, 4)], { type: 'text/plain;charset=utf-8' });
-        let a = document.createElement('a');
-        let url = URL.createObjectURL(blob);
-        a.href = url;
-        a.download = this.props.projectName + '.json';
-        document.body.appendChild(a);
-        a.click();
-        /* istanbul ignore next */
-        setTimeout(function() {
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        }, 0);
-    }
-    clear() {
-        this.props.dispatch(clearState());
+        return serializeDatabase().then(data=>{
+            const exportData = {
+                data,
+                projectName: this.context.projectName
+            };
+            let blob = new Blob([JSON.stringify(exportData, null, 4)], { type: 'text/plain;charset=utf-8' });
+            let a = document.createElement('a');
+            let url = URL.createObjectURL(blob);
+            a.href = url;
+            a.download = this.context.projectName + '.json';
+            document.body.appendChild(a);
+            a.click();
+            /* istanbul ignore next */
+            setTimeout(function() {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 0);
+        });
     }
     save() {
-        const exportData = {
-            orm: this.props.ormData,
-            rootModelId: this.props.rootModelId,
-            projectName: this.props.projectName
-        };
-        saveGoogleDriveFile(exportData, this.props.projectName);
+        return serializeDatabase().then(data=>{
+            const exportData = {
+                data,
+                projectName: this.context.projectName
+            };
+            saveGoogleDriveFile(exportData, this.context.projectName);
+        });
     }
     open() {
         getAllJsonInFolder().then(files => {
@@ -97,12 +88,10 @@ class Toolbar extends React.Component {
     }
     openFile(file) {
         this.setState({files: undefined}); // remove files to close dialog
-        return openGoogleDriveFile(file.title).then(data => {
-            persistor.purge();
-            this.props.dispatch({
-                type: 'import_app',
-                import: { data }
-            });
+        return openGoogleDriveFile(file.title).then(driveFile => {
+            return loadDatabase(driveFile.data);
+        }).catch(err=>{
+            log.error(err);
         });
     }
     cancelOpen() {
@@ -110,7 +99,7 @@ class Toolbar extends React.Component {
         this.setState({files: undefined});
     }
     render() {
-        const { download, upload, clear, save, open, openFile, cancelOpen } = this;
+        const { download, upload, save, open, openFile, cancelOpen } = this;
         const { files } = this.state;
         return (
             <div className="toolbar">
@@ -134,20 +123,9 @@ class Toolbar extends React.Component {
                 <button title="Open from Google Drive" className="toolbar-button" onClick={open}>
                     <i className="material-icons">cloud_download</i>
                 </button>
-                <button title="Clear" className="toolbar-button" onClick={clear}>
-                    <i className="material-icons">clear</i>
-                </button>
                 <FileSelector files={files} selectFile={openFile} cancelFileSelection={cancelOpen}/>
             </div>
         );
     }
 }
-
-function mapStateToProps(state, ownProps) {
-    const ormData = state.orm;
-    const rootModelId = get(state, 'project_model.rootModelId');
-    const projectName = get(state, 'project_model.name');
-    return { ormData, rootModelId, projectName };
-}
-
-export default connect(mapStateToProps)(Toolbar);
+Toolbar.contextType = projectContext;

@@ -78,6 +78,11 @@ module.exports = {
                 to: 'apple-touch-icon.png'
             }
         ]),
+        // Make browser version avoid using Node specific stuff
+        new webpack.NormalModuleReplacementPlugin(
+            /^fs$/,
+            path.resolve(__dirname, './src/database/fakeFs.js')
+        ),
         new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/), // dropping locales makes moment WAY smaller.
         new webpack.DefinePlugin({
             __PRODUCTION__: process.env.NODE_ENV === 'production',

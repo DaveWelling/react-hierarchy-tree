@@ -1,13 +1,14 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Editor } from 'slate-react';
 import { Value } from 'slate';
 import cuid from 'cuid';
-import * as Database from '../../database';
-import RxDB from 'rxdb';
-import throttle from 'lodash.throttle';
+import { getRepository } from '../../database';
+import { throttle } from 'lodash';
 import { isKeyHotkey } from 'is-hotkey';
 import { Button, Icon, Toolbar } from './components';
 import './fullTextView.css';
+import * as logging from '../../logging';
 
 const initialValue = Value.fromJSON({
     document: {
@@ -44,7 +45,6 @@ const isUnderlinedHotkey = isKeyHotkey('mod+u');
 const isCodeHotkey = isKeyHotkey('mod+`');
 
 export default class FullTextView extends React.Component {
-
     constructor(props) {
         super(props);
         this.update = throttle(this.update.bind(this), 2000, { loading: false });
@@ -59,49 +59,71 @@ export default class FullTextView extends React.Component {
         this.onKeyDown = this.onKeyDown.bind(this);
         this.onClickBlock = this.onClickBlock.bind(this);
         this.onClickMark = this.onClickMark.bind(this);
+        this.loadStateForModel = this.loadStateForModel.bind(this);
+
+        this.loadStateForModel(props.model);
 
         this.state = {
             loading: true
         };
     }
 
-    async componentDidMount() {
-        const db = await Database.get();
-        db.chapter
-            .findOne()
-            .where('_id')
-            .eq(this.props._id)
-            .exec()
-            .then(chapter => {
-                if (!chapter) {
-                    chapter = {
-                        _id: cuid(),
-                        text: initialValue
-                    };
-                }
-                console.log('reload chapter ');
-                console.dir(chapter);
-                this.setState({ chapter, value: Value.fromJSON(chapter.text), loading: false });
-            });
+    componentDidUpdate(prevProps) {
+        if (this.props.model._id !== prevProps.model._id) {
+            this.loadStateForModel(this.props.model);
+        }
+    }
+
+    loadStateForModel(model) {
+        getRepository(model.type).then(repository => {
+            return repository
+                .find({ modelId: model._id })
+                .then(textModels => {
+                    if (textModels.length > 1)
+                        throw new Error(`There are (somehow) two ${model.type} records for ${model.title}`);
+                    let textModel;
+                    if (textModels.length === 0) {
+                        textModel = {
+                            _id: cuid(),
+                            modelId: model._id,
+                            text: initialValue
+                        };
+                        return repository.create(textModel).then(() => {
+                            // value for Slate to use is different from storage value.
+                            this.setState({
+                                textModel,
+                                value: Value.fromJSON(textModel.text),
+                                loading: false
+                            });
+                        });
+                    } else {
+                        textModel = textModels[0];
+                        // value for Slate to use is different from storage value.
+                        this.setState({
+                            textModel,
+                            value: Value.fromJSON(textModel.text),
+                            loading: false
+                        });
+                    }
+                })
+                .catch(err => logging.error(err));
+        });
     }
 
     async onChange({ value: changeValue }) {
-        const { value, chapter } = this.state;
+        const { value, textModel } = this.state;
         if (changeValue.document !== value.document) {
-            this.update(chapter, changeValue);
+            this.update(textModel, changeValue).catch(err => {
+                logging.error(err);
+            });
         }
         this.setState({ value: changeValue });
     }
 
-    async update(chapter, changeValue) {
+    async update(textModel, changeValue) {
         const content = changeValue.toJSON();
-        const db = await Database.get();
-        if (RxDB.isRxDocument(chapter)) {
-            chapter.update({ $set: { text: content } });
-        } else {
-            chapter.text = content;
-            db.chapter.upsert(chapter);
-        }
+        textModel.text = content;
+        return getRepository(this.props.model.type).then(repository=>repository.update(textModel));
     }
 
     /**
@@ -110,7 +132,7 @@ export default class FullTextView extends React.Component {
      * @param {String} type
      * @return {Boolean}
      */
-    hasMark(type){
+    hasMark(type) {
         const { value } = this.state;
         return value.activeMarks.some(mark => mark.type === type);
     }
@@ -142,7 +164,7 @@ export default class FullTextView extends React.Component {
      * @param {String} icon
      * @return {Element}
      */
-    renderMarkButton(type, icon){
+    renderMarkButton(type, icon) {
         const isActive = this.hasMark(type);
 
         return (
@@ -159,7 +181,7 @@ export default class FullTextView extends React.Component {
      * @param {String} icon
      * @return {Element}
      */
-    renderBlockButton(type, icon){
+    renderBlockButton(type, icon) {
         let isActive = this.hasBlock(type);
 
         if (['numbered-list', 'bulleted-list'].includes(type)) {
@@ -186,7 +208,7 @@ export default class FullTextView extends React.Component {
      * @param {Object} props
      * @return {Element}
      */
-    renderBlock(props, editor, next){
+    renderBlock(props, editor, next) {
         const { attributes, children, node } = props;
 
         switch (node.type) {
@@ -213,7 +235,7 @@ export default class FullTextView extends React.Component {
      * @param {Object} props
      * @return {Element}
      */
-    renderMark(props, editor, next){
+    renderMark(props, editor, next) {
         const { children, mark, attributes } = props;
 
         switch (mark.type) {
@@ -237,7 +259,7 @@ export default class FullTextView extends React.Component {
      * @param {Editor} editor
      * @return {Change}
      */
-    onKeyDown(event, editor, next){
+    onKeyDown(event, editor, next) {
         let mark;
 
         if (isBoldHotkey(event)) {
@@ -262,7 +284,7 @@ export default class FullTextView extends React.Component {
      * @param {Event} event
      * @param {String} type
      */
-    onClickMark(event, type){
+    onClickMark(event, type) {
         event.preventDefault();
         this.editor.toggleMark(type);
     }
@@ -273,7 +295,7 @@ export default class FullTextView extends React.Component {
      * @param {Event} event
      * @param {String} type
      */
-    onClickBlock(event, type){
+    onClickBlock(event, type) {
         event.preventDefault();
 
         const { editor } = this;
@@ -346,3 +368,7 @@ export default class FullTextView extends React.Component {
         );
     }
 }
+
+FullTextView.propTypes = {
+    model: PropTypes.object
+};

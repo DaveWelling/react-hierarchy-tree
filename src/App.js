@@ -7,14 +7,22 @@ import Split from 'split.js';
 import Toolbar from './components/Toolbar';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from 'react-toastify';
-import {publish} from './store/eventSink';
+import {publish} from './eventSink';
 import {throttle} from 'lodash';
+import ProjectContext from './projectContext';
 
 const id = 'app';
 class App extends Component {
     constructor(props){
         super(props);
         this.throttledPublish = throttle(publish, 200);
+        this.setProjectName = projectName =>{
+            this.setState({projectName});
+        };
+        this.state = {
+            projectName: '',
+            setProjectName: this.setProjectName
+        };
     }
     componentDidMount() {
         const {throttledPublish} = this;
@@ -55,20 +63,21 @@ class App extends Component {
         });
     }
     render() {
-
         return (
-            <div className="App">
-              <div id={'splitLeft-'+id} className="fullHeight leftSplit">
-                <div className="fullHeight innerLeftSplit">
-                    <TreeView />
-                    <Toolbar />
+            <ProjectContext.Provider value={this.state} >
+                <div className="App">
+                <div id={'splitLeft-'+id} className="fullHeight leftSplit">
+                    <div className="fullHeight innerLeftSplit">
+                        <TreeView />
+                        <Toolbar />
+                    </div>
                 </div>
-              </div>
-              <div id={'splitRight-'+id} className="fullHeight">
-                <EditView />
-                <ToastContainer/>
-              </div>
-            </div>
+                <div id={'splitRight-'+id} className="fullHeight">
+                    <EditView />
+                    <ToastContainer/>
+                </div>
+                </div>
+            </ProjectContext.Provider>
         );
     }
 }

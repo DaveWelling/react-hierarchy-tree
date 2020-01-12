@@ -1,4 +1,4 @@
-const set = require('lodash.set');
+const {set} = require('lodash');
 const expect = require('expect');
 const {spyOn, restoreSpies } = expect;
 const {getRepository, clear} = require('../../src/database');
@@ -284,7 +284,7 @@ describe('modelActions', function(){
         });
         describe('children exist', function(){
             it('children are given new parent\'s parentId', async function(){
-                const children = await repo.find(collection => collection.where('parentId').eq('b1'));
+                const children = await repo.find({'parentId':'b1'});
                 expect(children.length).toEqual(2);
             });
         });
@@ -336,7 +336,7 @@ describe('modelActions', function(){
         });
         describe('the merging model has children', function(){
             it('children are given new parent\'s parentId', async function(){
-                const children = await repo.find(collection => collection.where('parentId').eq('b1'));
+                const children = await repo.find({'parentId':'b1'});
                 expect(children.length).toEqual(2);
             });
         });
@@ -382,10 +382,10 @@ describe('modelActions', function(){
             await repo.create({_id: 'b3', hi: 'b3', parentId: 'a0', sequence: 2 });
             await repo.create({_id: 'c1', hi: 'c1', parentId: 'b2', sequence: 0 });
             await repo.create({_id: 'c2', hi: 'c2', parentId: 'b2', sequence: 0 });
-            target = await repo.get(_id);
             if (update) {
-                await target.update(update);
+                await repo.update(update);
             }
+            target = await repo.get(_id);
             publishSpy = spyOn(eventSink, 'publish');
         }
         afterEach(async function(){
@@ -394,7 +394,7 @@ describe('modelActions', function(){
         });
         describe('model is not collapsed and has children', function(){
             it('requests the first child record to be focused', async function(){
-                await setupRepo('b2', { $set: {'ui': {collapsed: false}}});
+                await setupRepo('b2', { _id: 'b2', 'ui': {collapsed: false}});
                 await modelActions.moveToNext(target, 'test');
                 expect(publishSpy).toHaveBeenCalled();
                 let arg = publishSpy.calls[0].arguments[0];
@@ -454,10 +454,20 @@ describe('modelActions', function(){
         });
         describe('parent is collapsed and has children', function(){
             it('returns the parent', async function(){
-                await root.update({$set: { 'ui.collapsed': true }});
-                const result = await modelActions.findBottomVisibleChild(root, 'test');
+                const updatedParent = await repo.update({ _id: 'a0', ui: {collapsed: true}});
+                const result = await modelActions.findBottomVisibleChild(updatedParent, 'test');
                 expect(result._id).toEqual('a0');
             });
+        });
+    });
+    describe('focus', function(){
+        it('dispatches focus_project_model', function(){
+            const publishSpy = spyOn(eventSink, 'publish');
+            const model= { _id: 'b3' };
+            modelActions.focus(model);
+            let arg = publishSpy.calls[0].arguments[0];
+            expect(arg.type).toEqual('focus_project_model');
+            expect(arg.focus._id).toEqual('b3');
         });
     });
 });

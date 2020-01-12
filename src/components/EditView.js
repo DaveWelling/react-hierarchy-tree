@@ -1,30 +1,33 @@
 import React from 'react';
 import './editView.css';
-import {connect} from 'react-redux';
-import {get} from 'lodash';
 import config from '../config';
+import {subscribe} from '../eventSink';
+import ProjectContext from '../projectContext';
 
-class EditView extends React.Component {
+export default class EditView extends React.Component {
     constructor(props) {
         super(props);
-        this.onChange = this.onChange.bind(this);
+        this.modelFocused = this.modelFocused.bind(this);
+        this.unsubscribe = subscribe('focus_project_model', this.modelFocused);
+        this.state = {
+            model: {}
+        };
     }
 
-    onChange(changes){
-        const {dispatch, model, model:{_id}} = this.props;
-
-
-        dispatch({
-            type: 'update_project_model',
-            update: {
-                _id,
-                changes
-            }
-        });
+    componentWillUnmount() {
+        this.unsubscribe();
     }
+
+    modelFocused(action) {
+        const {model} = action;
+        if (this.state.model._id !== model._id || this.state.model.type !== model.type) {
+            this.setState({model});
+        }
+    }
+
     render() {
-        const {model, projectName} = this.props;
-        const {onChange} = this;
+        const {projectName} = this.context;
+        const {model} = this.state;
         let toRender = <div>Select a node.</div>;
         if (model && model.type) {
             let ViewType = require('./' + getViewNameForModelType(model.type));
@@ -32,23 +35,14 @@ class EditView extends React.Component {
                 ViewType = ViewType.default;
             }
             toRender = (<div className="edit-view">
-                <ViewType model={model} projectName={projectName} onChange={onChange} />
+                <ViewType model={model} projectName={projectName} />
             </div>);
         }
         return toRender;
     }
 }
 
-function mapStateToProps(state, ownProps){
-    let model = get(state, 'project_model.model');
-    const projectName = get(state, 'project_model.name');
-    return {
-        model,
-        projectName
-    };
-}
-
-export default connect(mapStateToProps)(EditView);
+EditView.contextType = ProjectContext;
 
 function getViewNameForModelType(type){
     const dataType = config.dataTypes.find(dt=>dt.title === type);
