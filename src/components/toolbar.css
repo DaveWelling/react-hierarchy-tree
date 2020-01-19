@@ -49,3 +49,8 @@
   margin: .25em 1em .75em 0;
   border: none;
 }
+
+.clearButton {
+    color: red;
+    font-weight: bold;
+}

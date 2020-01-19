@@ -29,6 +29,8 @@ export default class TreeView extends React.Component {
 
 
         this.unsubscribes.push(subscribe('import_complete', this.loadRoot));
+        this.unsubscribes.push(subscribe('purge_complete', this.loadRoot));
+
         this.loadRoot();
     }
 

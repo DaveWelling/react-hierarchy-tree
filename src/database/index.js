@@ -71,16 +71,23 @@ function getRepository(collectionName) {
     return repositories[collectionName];
 }
 
-async function purgeDatabase() {
+async function purgeDatabase(fileName = 'curator') {
     return startPromise.then(loki=>{
         repositories = {};
-        loki.listCollections().forEach(collection=>{
-            loki.removeCollection(collection.name);
-        });
-        return new Promise((resolve, reject)=>{
-            loki.saveDatabase(err=>{
-                if (err) reject(err);
-                resolve(loki);
+        // loki.listCollections().forEach(collection=>{
+        //     loki.removeCollection(collection.name);
+        // });
+        return deleteDatabase(fileName).then(()=>{
+            return new Promise((resolve, reject)=>{
+                saveToIndexedDb(loki, fileName, (err)=>{
+                    if (err) reject(err);
+                    resolve(loki);
+                });
+            });
+        }).then(()=>{
+            publish({
+                type: 'purge_complete',
+                import: {}
             });
         });
     });
@@ -126,18 +133,23 @@ async function loadDatabase(databaseJson, mainFileName = 'curator') {
             try {
                 loki.autoloadCallback = ()=>resolve(loki);
                 loki.loadJSON(databaseJson);
-                loki.collections.forEach(collection=>collection.dirty=true);
-                if (idbAdapter) {
-                    adapter.exportDatabase(mainFileName, loki, finishSave);
-                } else {
-                    loki.saveDatabase(finishSave);
-                }
+                saveToIndexedDb(loki, mainFileName, finishSave);
             } catch (err) {
                 reject(err);
             }
         });
         return newStartPromise;
     });
+}
+
+async function saveToIndexedDb(loki, fileName, callback) {
+    loki.collections.forEach(collection=>collection.dirty=true);
+    if (idbAdapter) {
+        // Export, as in export to disk, i.e. indexedDb
+        adapter.exportDatabase(fileName, loki, callback);
+    } else {
+        loki.saveDatabase(callback);
+    }
 }
 
 async function serializeDatabase(){

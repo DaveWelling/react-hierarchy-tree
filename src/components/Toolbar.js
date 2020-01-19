@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { saveGoogleDriveFile, openGoogleDriveFile, getAllJsonInFolder } from '../googleDrive';
 import FileSelector from './FileSelector';
 import projectContext from '../projectContext';
-import {serializeDatabase, loadDatabase} from '../database';
+import {serializeDatabase, loadDatabase, purgeDatabase} from '../database';
 const log = require('../logging');
 
 export default class Toolbar extends React.Component {
@@ -16,6 +16,7 @@ export default class Toolbar extends React.Component {
         this.open = this.open.bind(this);
         this.openFile = this.openFile.bind(this);
         this.cancelOpen = this.cancelOpen.bind(this);
+        this.clearDatabase = this.clearDatabase.bind(this);
         this.state = {};
     }
 
@@ -98,11 +99,21 @@ export default class Toolbar extends React.Component {
         // remove files to close dialog
         this.setState({files: undefined});
     }
+    clearDatabase() {
+        purgeDatabase().then(()=>{
+            log.info('Database cleared.');
+        }).catch(err=>{
+            log.error('Failed to clear the database.', err);
+        });
+    }
     render() {
-        const { download, upload, save, open, openFile, cancelOpen } = this;
+        const { download, upload, save, open, openFile, cancelOpen, clearDatabase } = this;
         const { files } = this.state;
         return (
             <div className="toolbar">
+                <button title="Clear everything" className="toolbar-button" onClick={clearDatabase}>
+                    <i className="material-icons clearButton">clear</i>
+                </button>
                 <button title="Download Project" className="toolbar-button" onClick={download}>
                     <i className="material-icons">save_alt</i>
                 </button>
