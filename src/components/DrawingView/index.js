@@ -1,80 +1,71 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './drawingView.css';
-import {getAllPicturesInFolder, saveNewImage} from '../../googleDrive';
+import { getAllPicturesInFolder, saveNewImage } from '../../googleDrive';
 import FileSelector from '../FileSelector';
 import CanvasWrap from './CanvasWrap';
 import * as logging from '../../logging';
-import {getRepository} from '../../database';
+import { getRepository } from '../../database';
 import cuid from 'cuid';
 
-class DrawingView extends React.Component {
-    constructor(props) {
-        super(props);
-        this.onClear = this.onClear.bind(this);
-        this.onChange = this.onChange.bind(this);
-        this.onSettingsChange = this.onSettingsChange.bind(this);
-        this.setBackground = this.setBackground.bind(this);
-        this.openFile = this.openFile.bind(this);
-        this.cancelOpen = this.cancelOpen.bind(this);
-        this.loadStateForModel = this.loadStateForModel.bind(this);
+export default function DrawingView({ model, projectName }) {
+    const [loading, setLoading] = useState('true');
+    const [canvasSettings, setCanvasSettings] = useState({
+        weight: 1,
+        mode: 'draw',
+        color: '#ffffff'
+    });
+    // Default drawingModel with undefined drawing
+    const [drawingModel, setDrawingModel] = useState({
+        _id: cuid(),
+        modelId: model._id,
+        drawing: undefined
+    });
+    // picture file listing
+    const [files, setFiles] = useState();
+    const canvasRef = useRef();
 
-        this.loadStateForModel(props.model);
+    useEffect(() => {
+        loadStateForModel(model);
+    }, [model]);
 
-        this.state = {
-            loading: true,
-            canvasSettings: {
-                weight: 1,
-                mode: 'draw',
-                color: '#ffffff'
-            }
-        };
-    }
-
-    componentDidUpdate(prevProps) {
-        if (this.props.model._id !== prevProps.model._id) {
-            this.loadStateForModel(this.props.model);
-        }
-    }
-
-    loadStateForModel(model) {
+    function loadStateForModel(model) {
         getRepository(model.type).then(repository => {
-            // Default drawingModel with undefined drawing
-            let drawingModel = {
-                _id: cuid(),
-                modelId: model._id,
-                drawing: undefined
-            };
-            this.setState({ drawingModel, loading: true});
-            repository.find({modelId: model._id}).then(drawingModels=>{
-                if (drawingModels.length > 1) throw new Error(`There are (somehow) two ${model.type} records for ${model.title}`);
-                if (drawingModels.length === 0) {
-                    // None found - create default drawing model in database.
-                    return repository.create(drawingModel).then(() => {
-                        this.setState({ drawingModel, loading: false });
-                    });
-                } else {
-                    drawingModel = drawingModels[0];
-                    this.setState({ drawingModel, loading: false });
-                }
-            }).catch(err=>logging.error(err));
+            repository
+                .find({ modelId: model._id })
+                .then(drawingModels => {
+                    if (drawingModels.length > 1)
+                        throw new Error(`There are (somehow) two ${model.type} records for ${model.title}`);
+                    if (drawingModels.length === 0) {
+                        // None found - create default drawing model in database.
+                        return repository.create(drawingModel).then(() => {
+                            setDrawingModel(drawingModel);
+                            setLoading(false);
+                        });
+                    } else {
+                        let newDrawingModel = drawingModels[0];
+                        setDrawingModel(newDrawingModel);
+                        setLoading(false);
+                    }
+                })
+                .catch(err => logging.error(err));
         });
     }
 
-    onChange(change) {
-        let oldModel = this.state.drawingModel;
-        let newModel = {...oldModel, ...change};
-        this.setState(change);
-        getRepository(this.props.model.type).then(repository => repository.update(newModel));
+    function onChange(change) {
+        let oldModel = drawingModel;
+        let newModel = { ...oldModel, ...change };
+        setDrawingModel(newModel);
+        getRepository(model.type).then(repository => repository.update(newModel));
     }
 
-    onClear(){
-        this.onChange({
+    function onClear() {
+        onChange({
             drawing: undefined
         });
     }
 
-    onSettingsChange(e){
+    function onSettingsChange(e) {
         let value;
         switch (e.target.name) {
             case 'weight':
@@ -89,85 +80,81 @@ class DrawingView extends React.Component {
                 value = e.target.value;
                 break;
         }
-        this.setState({
+        setCanvasSettings({
             canvasSettings: {
-                ...this.state.canvasSettings,
-                [e.target.name] : value
+                ...canvasSettings,
+                [e.target.name]: value
             }
         });
     }
 
-    setBackground(){
-        getAllPicturesInFolder(this.props.projectName).then(pictures=>{
-            this.setState({
-                files: pictures
-            });
+    function setBackground() {
+        getAllPicturesInFolder(projectName).then(pictures => {
+            setFiles(pictures);
         });
     }
 
-    openFile(file){
-        const {canvasRef} = this;
-        this.setState({files: undefined}); // remove files to close dialog
+    function openFile(file) {
+        setFiles(undefined); // remove files to close dialog
         if (typeof file === 'string') {
-            this.onChange({backgroundImage: file});
+            onChange({ backgroundImage: file });
         } else {
             if (file) {
                 if (canvasRef) {
                     if (file instanceof Blob) {
-                        saveNewImage(file, this.props.projectName).then(googleFile=>{
-                            this.onChange({backgroundImage: googleFile});
+                        saveNewImage(file, projectName).then(googleFile => {
+                            onChange({ backgroundImage: googleFile });
                         });
                     } else {
-                        this.onChange({backgroundImage: file});
+                        onChange({ backgroundImage: file });
                     }
                 }
             }
         }
     }
-    cancelOpen(){
+
+    function cancelOpen() {
         // remove files to close dialog
-        this.setState({files: undefined});
+        setFiles(undefined);
     }
-    render() {
-        const that = this;
-        const { files, canvasSettings, drawingModel, loading } = this.state;
-        const {onSettingsChange, onClear, setBackground, openFile, cancelOpen, onChange} = this;
-        if (loading) {
-            return <h1>Loading...</h1>;
-        }
-        return (
-            <div id="canvasContainer" className="fullHeight drawingView">
-                <CanvasWrap id={drawingModel._id}
-                    ref={(r)=>this.canvasRef = r}
-                    onChange={onChange}
-                    backgroundImage={drawingModel.backgroundImage}
-                    canvasSettings={canvasSettings}
-                    drawing={drawingModel.drawing}
+
+    if (loading) {
+        return <h1>Loading...</h1>;
+    }
+    return (
+        <div id="canvasContainer" className="fullHeight drawingView">
+            <CanvasWrap
+                id={drawingModel._id}
+                ref={canvasRef}
+                onChange={onChange}
+                backgroundImage={drawingModel.backgroundImage}
+                canvasSettings={canvasSettings}
+                drawing={drawingModel.drawing}
+            />
+            <div className="canvasToolbar">
+                <button className="canvasButton" onClick={onClear}>
+                    <i className="material-icons">delete</i>
+                </button>
+                <button className="canvasButton" onClick={setBackground}>
+                    <i className="material-icons">add_photo_alternate</i>
+                </button>
+                <label>Thickness</label>
+                <input
+                    name="weight"
+                    type="range"
+                    min="1"
+                    max="40"
+                    onChange={onSettingsChange}
+                    value={canvasSettings.weight}
+                    step="1"
+                    autoComplete="off"
                 />
-                <div className="canvasToolbar">
-                    <button className="canvasButton" onClick={onClear}>
-                        <i className="material-icons">delete</i>
-                    </button>
-                    <button className="canvasButton" onClick={setBackground}>
-                        <i className="material-icons">add_photo_alternate</i>
-                    </button>
-                    <label>Thickness</label>
-                    <input
-                        name="weight"
-                        type="range"
-                        min="1"
-                        max="40"
-                        onChange={onSettingsChange}
-                        value={that.state.canvasSettings.weight}
-                        step="1"
-                        autoComplete="off"
-                    />
-                    {/* <label>Smoothing</label>
+                {/* <label>Smoothing</label>
                     <input
                         name="smoothing"
                         type="checkbox"
                         onChange={onSettingsChange}
-                        checked={this.state.canvasSettings.smoothing}
+                        checked={canvasSettings.smoothing}
                         autoComplete="off"
                     />
                     <label>Adaptive stroke</label>
@@ -175,53 +162,50 @@ class DrawingView extends React.Component {
                         name="adaptiveStroke"
                         type="checkbox"
                         onChange={onSettingsChange}
-                        checked={this.state.canvasSettings.adaptiveStroke}
+                        checked={canvasSettings.adaptiveStroke}
                         autoComplete="off"
                     /> */}
-                    <label>Mode</label>
+                <label>Mode</label>
 
-                    <div className="select-container">
-                        <select name="mode" value={this.state.canvasSettings.mode} onChange={onSettingsChange}>
-                            <option value="draw" default>
-                                Draw
-                            </option>
-                            <option value="fill" default>
-                                Fill
-                            </option>
-                            <option value="erase" default>
-                                Erase
-                            </option>
+                <div className="select-container">
+                    <select name="mode" value={canvasSettings.mode} onChange={onSettingsChange}>
+                        <option value="draw" default>
+                            Draw
+                        </option>
+                        <option value="fill" default>
+                            Fill
+                        </option>
+                        <option value="erase" default>
+                            Erase
+                        </option>
                     </select>
-                    </div>
-                    <label>Color</label>
-                    <input
-                        name="color"
-                        type="color"
-                        onChange={onSettingsChange}
-                        value={this.state.canvasSettings.color}
-                        autoComplete="off"
-                    />
-                    <FileSelector files={files} selectFile={openFile} cancelFileSelection={cancelOpen}/>
-                    {/* <label>Opacity</label>
+                </div>
+                <label>Color</label>
+                <input
+                    name="color"
+                    type="color"
+                    onChange={onSettingsChange}
+                    value={canvasSettings.color}
+                    autoComplete="off"
+                />
+                <FileSelector files={files} selectFile={openFile} cancelFileSelection={cancelOpen} />
+                {/* <label>Opacity</label>
                     <input
                         name="opacity"
                         type="range"
                         min="0"
                         max="1"
                         onChange={onSettingsChange}
-                        value={this.state.canvasSettings.opacity}
+                        value={canvasSettings.opacity}
                         step="0.05"
                         autoComplete="off"
                     /> */}
-                </div>
             </div>
-        );
-    }
+        </div>
+    );
 }
 
 DrawingView.propTypes = {
-    model: PropTypes.object,
-    projectName: PropTypes.string
+    model: PropTypes.object.isRequired,
+    projectName: PropTypes.string.isRequired
 };
-
-export default DrawingView;

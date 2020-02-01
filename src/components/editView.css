@@ -3,3 +3,7 @@
     width: 100%;
     background-color: #02181a;
 }
+
+.default-message {
+    padding: 1em;
+}
