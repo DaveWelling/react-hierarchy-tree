@@ -5,7 +5,6 @@ import { Value } from 'slate';
 import { isKeyHotkey } from 'is-hotkey';
 import components from './components';
 import './fullTextView.css';
-import * as logging from '../../logging';
 import {get} from 'lodash';
 const { BlockToolbar, RenderMark, RenderBlock } = components;
 const initialValue = {

@@ -35,7 +35,6 @@ export default function BlockButton({editor, type, icon}) {
     function onClickBlock(event, type) {
         event.preventDefault();
 
-        const { editor } = this;
         const { value } = editor;
         const { document } = value;
 

@@ -47,10 +47,8 @@ export default function DrawingView({ subModel, projectName, update }) {
                 break;
         }
         setCanvasSettings({
-            canvasSettings: {
-                ...canvasSettings,
-                [e.target.name]: value
-            }
+            ...canvasSettings,
+            [e.target.name]: value
         });
     }
 
@@ -90,7 +88,7 @@ export default function DrawingView({ subModel, projectName, update }) {
                 id={drawingModel._id}
                 ref={canvasRef}
                 onChange={onChange}
-                backgroundImage={drawingModel.backgroundImage}
+                backgroundImage={drawingModel.content.backgroundImage}
                 canvasSettings={canvasSettings}
                 drawing={drawingModel.content.drawing}
             />
