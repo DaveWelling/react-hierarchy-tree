@@ -8,7 +8,8 @@ const logging = require('../logging');
 const config = require('../config');
 
 const defaultCollectionName = config.defaultCollectionName;
-let adapter, env = 'NODEJS';
+let adapter,
+    env = 'NODEJS';
 let idbAdapter;
 // eslint-disable-next-line no-undef
 if (__TESTING__) {
@@ -19,21 +20,22 @@ if (__TESTING__) {
     adapter = new lokijs.LokiPartitioningAdapter(idbAdapter, { paging: true });
 }
 
-
-let startPromise;
+let startPromise, _mainFileName;
 const _create = async (mainFileName = 'curator', autosaveInterval = 10000) => {
-    const _mainFileName = mainFileName;
-    const startPromise = new Promise((resolve, reject)=>{
+    _mainFileName = mainFileName;
+    const startPromise = new Promise((resolve, reject) => {
         try {
             let loki = new lokijs(_mainFileName, {
-                env,// eslint-disable-next-line no-undef
-                autosave: !__TESTING__,  // This will make tests hang if it is turned on.
+                env, // eslint-disable-next-line no-undef
+                autosave: !__TESTING__, // This will make tests hang if it is turned on.
                 autosaveInterval,
                 adapter,
                 autoload: true,
-                autoloadCallback: ()=>resolve(loki)
+                autoloadCallback: () => resolve(loki)
             });
-        } catch(err) {reject(err);}
+        } catch (err) {
+            reject(err);
+        }
     });
     return startPromise;
 };
@@ -52,11 +54,11 @@ module.exports = {
 };
 
 let repositories = {};
-function getCollection(collectionName=defaultCollectionName) {
-    return get().then(loki=>{
+function getCollection(collectionName = defaultCollectionName) {
+    return get().then(loki => {
         let collection = loki.getCollection(collectionName);
         if (!collection) {
-            collection = loki.addCollection(collectionName, {unique:['_id']});
+            collection = loki.addCollection(collectionName, { unique: ['_id'] });
         }
         return collection;
     });
@@ -64,7 +66,7 @@ function getCollection(collectionName=defaultCollectionName) {
 
 function getRepository(collectionName) {
     if (!repositories[collectionName]) {
-        repositories[collectionName] = getCollection(collectionName).then(collection=>{
+        repositories[collectionName] = getCollection(collectionName).then(collection => {
             return new Repository(collection);
         });
     }
@@ -72,38 +74,40 @@ function getRepository(collectionName) {
 }
 
 async function purgeDatabase(fileName = 'curator') {
-    return startPromise.then(loki=>{
+    return startPromise.then(loki => {
         repositories = {};
         // loki.listCollections().forEach(collection=>{
         //     loki.removeCollection(collection.name);
         // });
-        return deleteDatabase(fileName).then(()=>{
-            return new Promise((resolve, reject)=>{
-                saveToIndexedDb(loki, fileName, (err)=>{
-                    if (err) reject(err);
-                    resolve(loki);
+        return deleteDatabase(fileName)
+            .then(() => {
+                return new Promise((resolve, reject) => {
+                    saveToIndexedDb(loki, fileName, err => {
+                        if (err) reject(err);
+                        resolve(loki);
+                    });
+                });
+            })
+            .then(() => {
+                publish({
+                    type: 'purge_complete',
+                    import: {}
                 });
             });
-        }).then(()=>{
-            publish({
-                type: 'purge_complete',
-                import: {}
-            });
-        });
     });
 }
 
 async function deleteDatabase(mainFileName = 'curator') {
-    return startPromise.then(loki=>{
+    return startPromise.then(loki => {
         repositories = {};
-        return new Promise((resolve,reject)=>{
+        return new Promise((resolve, reject) => {
             try {
                 if (idbAdapter) {
                     idbAdapter.deleteDatabase(mainFileName);
                     idbAdapter.deleteDatabasePartitions(mainFileName);
                     resolve(loki);
                 } else {
-                    loki.deleteDatabase(err=>{
+                    loki.deleteDatabase(err => {
                         if (err) reject(err);
                         resolve(loki);
                     });
@@ -116,8 +120,8 @@ async function deleteDatabase(mainFileName = 'curator') {
 }
 
 async function loadDatabase(databaseJson, mainFileName = 'curator') {
-    return deleteDatabase(mainFileName).then(loki=>{
-        const newStartPromise = new Promise((resolve, reject)=>{
+    return deleteDatabase(mainFileName).then(loki => {
+        const newStartPromise = new Promise((resolve, reject) => {
             function finishSave(err) {
                 if (err) {
                     logging.error('Error while loading database from import:', err);
@@ -131,7 +135,7 @@ async function loadDatabase(databaseJson, mainFileName = 'curator') {
                 }
             }
             try {
-                loki.autoloadCallback = ()=>resolve(loki);
+                loki.autoloadCallback = () => resolve(loki);
                 loki.loadJSON(databaseJson);
                 saveToIndexedDb(loki, mainFileName, finishSave);
             } catch (err) {
@@ -143,7 +147,7 @@ async function loadDatabase(databaseJson, mainFileName = 'curator') {
 }
 
 async function saveToIndexedDb(loki, fileName, callback) {
-    loki.collections.forEach(collection=>collection.dirty=true);
+    loki.collections.forEach(collection => (collection.dirty = true));
     if (idbAdapter) {
         // Export, as in export to disk, i.e. indexedDb
         adapter.exportDatabase(fileName, loki, callback);
@@ -152,8 +156,20 @@ async function saveToIndexedDb(loki, fileName, callback) {
     }
 }
 
-async function serializeDatabase(){
-    return startPromise.then(loki=>{
+async function serializeDatabase() {
+    return startPromise.then(loki => {
         return loki.serialize();
     });
 }
+
+window.addEventListener('beforeunload', function (e) {
+    logging.info('trying to save');
+    startPromise.then(loki => {
+        if (idbAdapter) {
+            // Export, as in export to disk, i.e. indexedDb
+            adapter.exportDatabase(_mainFileName, loki, ()=>logging.info('saved.'));
+        } else {
+            loki.saveDatabase(()=>logging.info('saved.'));
+        }
+    });
+});

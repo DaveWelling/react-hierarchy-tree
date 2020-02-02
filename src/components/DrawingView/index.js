@@ -1,62 +1,28 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import './drawingView.css';
 import { getAllPicturesInFolder, saveNewImage } from '../../googleDrive';
 import FileSelector from '../FileSelector';
 import CanvasWrap from './CanvasWrap';
-import * as logging from '../../logging';
-import { getRepository } from '../../database';
-import cuid from 'cuid';
 
-export default function DrawingView({ model, projectName }) {
-    const [loading, setLoading] = useState('true');
+export default function DrawingView({ subModel, projectName, update }) {
     const [canvasSettings, setCanvasSettings] = useState({
         weight: 1,
         mode: 'draw',
         color: '#ffffff'
     });
     // Default drawingModel with undefined drawing
-    const [drawingModel, setDrawingModel] = useState({
-        _id: cuid(),
-        modelId: model._id,
-        drawing: undefined
-    });
+    const [drawingModel, setDrawingModel] = useState(subModel);
     // picture file listing
     const [files, setFiles] = useState();
     const canvasRef = useRef();
 
-    useEffect(() => {
-        loadStateForModel(model);
-    }, [model]);
-
-    function loadStateForModel(model) {
-        getRepository(model.type).then(repository => {
-            repository
-                .find({ modelId: model._id })
-                .then(drawingModels => {
-                    if (drawingModels.length > 1)
-                        throw new Error(`There are (somehow) two ${model.type} records for ${model.title}`);
-                    if (drawingModels.length === 0) {
-                        // None found - create default drawing model in database.
-                        return repository.create(drawingModel).then(() => {
-                            setDrawingModel(drawingModel);
-                            setLoading(false);
-                        });
-                    } else {
-                        let newDrawingModel = drawingModels[0];
-                        setDrawingModel(newDrawingModel);
-                        setLoading(false);
-                    }
-                })
-                .catch(err => logging.error(err));
-        });
-    }
 
     function onChange(change) {
-        let oldModel = drawingModel;
-        let newModel = { ...oldModel, ...change };
-        setDrawingModel(newModel);
-        getRepository(model.type).then(repository => repository.update(newModel));
+        let oldSubModel = drawingModel;
+        let newSubModel = { ...oldSubModel, content: {...oldSubModel.content, ...change }};
+        setDrawingModel(newSubModel);
+        update(newSubModel);
     }
 
     function onClear() {
@@ -118,9 +84,6 @@ export default function DrawingView({ model, projectName }) {
         setFiles(undefined);
     }
 
-    if (loading) {
-        return <h1>Loading...</h1>;
-    }
     return (
         <div id="canvasContainer" className="fullHeight drawingView">
             <CanvasWrap
@@ -129,7 +92,7 @@ export default function DrawingView({ model, projectName }) {
                 onChange={onChange}
                 backgroundImage={drawingModel.backgroundImage}
                 canvasSettings={canvasSettings}
-                drawing={drawingModel.drawing}
+                drawing={drawingModel.content.drawing}
             />
             <div className="canvasToolbar">
                 <button className="canvasButton" onClick={onClear}>
@@ -206,6 +169,7 @@ export default function DrawingView({ model, projectName }) {
 }
 
 DrawingView.propTypes = {
-    model: PropTypes.object.isRequired,
-    projectName: PropTypes.string.isRequired
+    subModel: PropTypes.object.isRequired,
+    projectName: PropTypes.string.isRequired,
+    update: PropTypes.func.isRequired
 };

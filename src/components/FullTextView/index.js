@@ -1,16 +1,14 @@
-import React, {useRef, useState, useEffect} from 'react';
+import React, {useRef, useState} from 'react';
 import PropTypes from 'prop-types';
 import { Editor } from 'slate-react';
 import { Value } from 'slate';
-import cuid from 'cuid';
-import { getRepository } from '../../database';
-import { throttle } from 'lodash';
 import { isKeyHotkey } from 'is-hotkey';
 import components from './components';
 import './fullTextView.css';
 import * as logging from '../../logging';
+import {get} from 'lodash';
 const { BlockToolbar, RenderMark, RenderBlock } = components;
-const initialValue = Value.fromJSON({
+const initialValue = {
     document: {
         nodes: [
             {
@@ -25,7 +23,7 @@ const initialValue = Value.fromJSON({
             }
         ]
     }
-});
+};
 
 
 /**
@@ -38,63 +36,20 @@ const isItalicHotkey = isKeyHotkey('mod+i');
 const isUnderlinedHotkey = isKeyHotkey('mod+u');
 const isCodeHotkey = isKeyHotkey('mod+`');
 
-export default function FullTextView({model}) {
+export default function FullTextView({subModel, update}) {
     const editorRef = useRef();
-    const [editorState, setEditorState] = useState(initialValue);
-    const [storageState, setStorageState] = useState(initialValue.toJSON());
-    const [loading, setLoading] = useState(true);
-
-    useEffect(()=>{
-        loadStateForModel(model);
-    }, [model]);
-
-    function loadStateForModel(model) {
-        getRepository(model.type).then(repository => {
-            return repository
-                .find({ modelId: model._id })
-                .then(storedStates => {
-                    if (storedStates.length > 1)
-                        throw new Error(`There are (somehow) two ${model.type} records for ${model.title}`);
-                    let storedState;
-                    if (storedStates.length === 0) {
-                        // If there isn't anything in the database, then create the initial entry.
-                        storedState = {
-                            _id: cuid(),
-                            modelId: model._id,
-                            text: initialValue
-                        };
-                        return repository.create(storedState).then(() => {
-                            // value for Slate to use is different from (stringified) storage value.
-                            setStorageState(storedState);
-                            setEditorState(Value.fromJSON(storedState.text));
-                            setLoading(false);
-                        });
-                    } else {
-                        // value for Slate to use is different from (stringified) storage value.
-                        storedState = storedStates[0];
-                        setEditorState(Value.fromJSON(storedState.text));
-                        setStorageState(storedState);
-                        setLoading(false);
-                    }
-                })
-                .catch(err => logging.error(err));
-        });
-    }
-
-    // Throttle because this will fire every time a user types something.
-    const update = throttle(async function update(storageStateToChange, changeValue) {
-        const content = changeValue.toJSON();
-        storageStateToChange.text = content;
-        return getRepository(model.type).then(repository=>repository.update(storageStateToChange));
-    }, 2000, { loading: false });
+    const [editorState, setEditorState] = useState(
+        Value.fromJSON(
+            get(subModel, 'content.text', initialValue)
+        )
+    );
 
     async function onChange({ value: newEditorState }) {
         // The editor state can change without creating state we care about storing.
         // We only care about the document.
         if (newEditorState.document !== editorState.document) {
-            update(storageState, newEditorState).catch(err => {
-                logging.error(err);
-            });
+            const newSubModel = {...subModel, content: {...subModel.content, text: newEditorState.toJSON()}};
+            update(newSubModel);
         }
         setEditorState(newEditorState);
     }
@@ -125,8 +80,6 @@ export default function FullTextView({model}) {
         editor.toggleMark(mark);
     }
 
-    if (loading) return <div> Loading ... </div>;
-
     return (
         <div className="fullTextView">
             <BlockToolbar editor={editorRef.current} editorState={editorState} />
@@ -147,5 +100,6 @@ export default function FullTextView({model}) {
 }
 
 FullTextView.propTypes = {
-    model: PropTypes.object
+    subModel: PropTypes.object.isRequired,
+    update: PropTypes.func.isRequired
 };

@@ -2,3 +2,6 @@
 /dist
 /node_modules
 npm-debug.log*
+client_id.json
+.nyc_output
+.vscode

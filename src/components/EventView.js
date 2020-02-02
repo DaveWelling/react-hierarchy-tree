@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import { get } from 'lodash';
 import DatePicker from 'react-datepicker';
 import moment from 'moment';
 import './editView.css';
@@ -7,32 +9,22 @@ import 'react-datepicker/dist/react-datepicker.css';
 import FullTextView from './FullTextView';
 import '../App.css';
 
-export default class EventView extends React.Component {
-    constructor(props){
-        super(props);
-        this.onChange = this.onChange.bind(this);
-    }
+export default function EventView({ subModel, update }) {
+    const [timing, setTiming] = useState(moment(get(subModel, 'content.timing')));
 
-    onChange(e){
-        let {timing, description} = this.props.model;
-        if (e instanceof moment) {
-            timing = e;
-        } else {
-            description = e.value;
+    function onChange(e) {
+        if (!(e instanceof moment)) {
+            throw new Error('What happened here?');
         }
-
-        this.props.onChange({
-            timing,
-            description
-        })
+        setTiming(e);
+        update({
+            ...subModel,
+            content: { ...subModel.content, timing: e }
+        });
     }
 
-    render() {
-        let {timing, description} = this.props.model;
-
-        const {onChange} = this;
-        timing = timing || moment();
-        return (<form className="fullHeight" >
+    return (
+        <form className="fullHeight">
             <DatePicker
                 onChange={onChange}
                 selected={timing}
@@ -40,8 +32,14 @@ export default class EventView extends React.Component {
                 timeFormat="HH:mm"
                 timeIntervals={15}
                 dateFormat="LLL"
-                timeCaption="time"/>
-            <FullTextView text={description} onChange={this.onChange}/>
-        </form>);
-    }
+                timeCaption="time"
+            />
+            <FullTextView subModel={subModel} update={update} />
+        </form>
+    );
 }
+
+EventView.propTypes = {
+    subModel: PropTypes.object.isRequired,
+    update: PropTypes.func.isRequired
+};

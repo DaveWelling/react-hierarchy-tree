@@ -118,12 +118,12 @@ async function ensureExpandedProjectModel(_id, collectionName = defaultCollectio
 }
 
 async function makeChildOfPreviousSibling(_id, selectionStart, selectionEnd, collectionName = defaultCollectionName) {
-    const model = getModel(_id);
     const previousSiblingData = await getPreviousSibling(_id, collectionName);
     if (!previousSiblingData) return; // first sibling cannot be indented further
     await valueChange(_id, 'parentId', previousSiblingData._id, collectionName);
     await resequenceProjectModel(_id, previousSiblingData._id, 'end', collectionName);
     await ensureExpandedProjectModel(_id, collectionName);
+    const model = await getModel(_id);
     eventSink.publish({
         type: 'focus_project_model',
         focus: {
@@ -148,19 +148,22 @@ async function makeSiblingOfParent(model, selectionStart, selectionEnd, collecti
         ? previousParent.sequence + (sequenceAfterPreviousParent - previousParent.sequence) / 2
         : previousParent.sequence + 1;
     const repo = await getRepository(collectionName);
-    await repo.update({
+    const newModel = await repo.update({
         _id,
         parentId: newParent._id,
         sequence: newSequence
     });
-    eventSink.publish({
-        type: 'focus_project_model',
-        focus: {
-            _id,
-            model,
-            selectionStart,
-            selectionEnd
-        }
+    // Have to put on the end of the stack so react can redraw it first.
+    setImmediate(()=>{
+        eventSink.publish({
+            type: 'focus_project_model',
+            focus: {
+                _id,
+                model: newModel,
+                selectionStart,
+                selectionEnd
+            }
+        });
     });
 }
 

@@ -109,10 +109,12 @@ export default class CanvasWrap extends React.Component {
                 }
             }
         });
+
+        if (drawing === undefined) {
+            this.canvas.clear();
+        }
         if (prevProps.id !== id) {
-            if (drawing === undefined) {
-                this.canvas.clear();
-            } else {
+            if (drawing !== undefined) {
                 this.suspendChangeReporting = true;
                 this.canvas.loadFromJSON(drawing);
                 this.suspendChangeReporting = false;
