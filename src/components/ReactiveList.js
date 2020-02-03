@@ -2,11 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import cuid from 'cuid';
 import database from '../database';
-import {logging} from 'googleapis/build/src/apis/logging';
+import logging from '../logging';
 
 export default function ReactiveList({subModel}) {
     const [textToAdd, setTextToAdd]= useState('');
-    const widgets = useRef({list:[]});
+    const [widgets, setWidgets] = useState({_id: subModel.modelId, list:[]});
     const unsubscribe = useRef();
 
     useEffect(()=>{
@@ -14,15 +14,13 @@ export default function ReactiveList({subModel}) {
             try {
                 const repository = await database.getRepository('ReactiveList');
 
-                unsubscribe.current = repository.onChange(subModel.modelId, change=>{
-                    widgets.current = change;
-                });
+                unsubscribe.current = repository.onChange(subModel.modelId, setWidgets);
 
                 const existing = await repository.get(subModel.modelId);
                 if (!existing) {
-                    await repository.create(widgets.current);
+                    await repository.create(widgets);
                 } else {
-                    widgets.current = existing;
+                    setWidgets(existing);
                 }
             } catch (err) {
                 logging.error(err);
@@ -47,14 +45,14 @@ export default function ReactiveList({subModel}) {
 
     function addTextToList() {
         setList([
-            ...widgets.current.list,
+            ...widgets.list,
             { _id: cuid(), title:textToAdd}
         ]);
         setTextToAdd('');
     }
 
     function removeTextFromList(id) {
-        const newList = [...widgets.current.list];
+        const newList = [...widgets.list];
         const indexOf = newList.findIndex(l=>l._id === id);
         newList.splice(indexOf, 1);
         setList(newList);
@@ -62,7 +60,7 @@ export default function ReactiveList({subModel}) {
 
     return (
         <div>
-            {widgets.current.list.map(l=>{
+            {widgets.list.map(l=>{
                 return (<div key={l._id} style={{display:'flex', padding: '1em'}}>
                     <div style={{paddingRight: '1em'}} >{l.title}</div>
                     <input type="button" value="-" onClick={()=>removeTextFromList(l._id)}/>
