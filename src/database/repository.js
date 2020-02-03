@@ -72,7 +72,7 @@ module.exports = class Repository {
      * @param {string} propertyName If an id is passed to _idOrModel, then this is the property to update for that id
      * @param {any} value If an id is passed to _idOrModel, then this is the value to set the property to for that id
      */
-    update(_idOrModel, propertyName, value) {
+    update(_idOrModel, propertyName, value, upsert=false) {
         return new Promise((resolve, reject)=>{
             try {
                 let updateDoc, _id = _idOrModel;
@@ -81,7 +81,10 @@ module.exports = class Repository {
                     _id = _idOrModel._id;
                 }
                 let existingDoc = this._privates.collection.by('_id', _id);
-                if (!existingDoc) throw new Error('Cannot find a document with _id = ' + _id);
+                if (!existingDoc) {
+                    if (!upsert) throw new Error('Cannot find a document with _id = ' + _id);
+                    else return this.create(updateDoc ? updateDoc : {[propertyName]: value});
+                }
                 let newDoc;
                 if (updateDoc) {
                     newDoc = {
