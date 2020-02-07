@@ -24,7 +24,7 @@ module.exports = {
         historyApiFallback: {
             index: '/index.html'
         },
-        port: 9000,
+        port: 80,
         host: '0.0.0.0',
         allowedHosts: ['localhost', 'novel.davewelling.com'],
         hot: true

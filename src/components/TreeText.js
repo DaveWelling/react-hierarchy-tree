@@ -31,15 +31,17 @@ export default class TreeText extends React.Component {
     }
 
     focusIfNecessary(actionData) {
-        if (!this.inputRef) return;
-        if (actionData._id === this.props.model._id && document.activeElement !== this.inputRef.domElementRef) {
-            this.inputRef.focus();
-            let { selectionStart, selectionEnd } = actionData;
-            if (typeof selectionStart !== 'undefined') {
-                selectionEnd = selectionEnd || selectionStart;
-                this.inputRef.setSelectionRange(selectionStart, selectionEnd);
+        setImmediate(()=>{
+            if (!this.inputRef) return;
+            if (actionData._id === this.props.model._id && document.activeElement !== this.inputRef.domElementRef) {
+                this.inputRef.focus();
+                let { selectionStart, selectionEnd } = actionData;
+                if (typeof selectionStart !== 'undefined') {
+                    selectionEnd = selectionEnd || selectionStart;
+                    this.inputRef.setSelectionRange(selectionStart, selectionEnd);
+                }
             }
-        }
+        });
     }
 
     onChange(e) {
