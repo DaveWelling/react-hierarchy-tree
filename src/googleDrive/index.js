@@ -22,6 +22,26 @@ export function openGoogleDriveFile(fileName) {
             toast(err.message || err);
         });
 }
+export function removeGoogleDriveFile(fileName) {
+    return authorize()
+        .then(loadDriveApi)
+        .then(() => ensureFolderExists(folderName))
+        .then(folderId => {
+            return checkIfFileExists(folderId, fileName).then(fileId => {
+                if (fileId) {
+                    return removeFile(fileId, folderId);
+                } else {
+                    throw new Error('File does not exist.  Did you already delete it?');
+                }
+            });
+        })
+        .then(request => {
+            return request.result;
+        })
+        .catch(err => {
+            toast(err.message || err);
+        });
+}
 export function saveGoogleDriveFile(fileJson, fileName) {
     authorize()
         .then(loadDriveApi)
@@ -273,6 +293,13 @@ function insertFileFromFileData(fileData, folderId) {
                 thumbnailLink: result.thumbnailLink
             }), reject);
         };
+    });
+}
+
+export function removeFile(fileId) {
+    return gapi.client.request({
+        path: `/drive/v2/files/${fileId}`,
+        method: 'DELETE'
     });
 }
 

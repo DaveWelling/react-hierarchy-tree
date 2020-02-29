@@ -30,14 +30,24 @@ const _create = async (mainFileName = 'curator', autosaveInterval = 10000) => {
                 autosave: !__TESTING__, // This will make tests hang if it is turned on.
                 autosaveInterval,
                 adapter,
-                autoload: true,
-                autoloadCallback: () => resolve(loki)
+                // autoload: true,
+                // autoloadCallback: (err) => {
+                //     debugger;
+                //     if (err) reject(err);
+                //     resolve(loki);
+                // }
             });
+            loki.loadDatabase({}, (err=>{
+                if (err) reject(err);
+                resolve(loki);
+            }));
         } catch (err) {
             reject(err);
         }
     });
-    return startPromise;
+    return startPromise.catch(err=>{
+        logging.error(err);
+    });
 };
 
 const get = () => {
@@ -76,12 +86,15 @@ function getRepository(collectionName) {
 async function purgeDatabase(fileName = 'curator') {
     return startPromise.then(loki => {
         repositories = {};
-        // loki.listCollections().forEach(collection=>{
-        //     loki.removeCollection(collection.name);
-        // });
+        // Clear everything out of loki's memory so it can't
+        // get back into the files.
+        loki.listCollections().forEach(collection=>{
+            loki.removeCollection(collection.name);
+        });
         return deleteDatabase(fileName)
             .then(() => {
                 return new Promise((resolve, reject) => {
+                    // Be sure we've saved with empty database files.
                     saveToIndexedDb(loki, fileName, err => {
                         if (err) reject(err);
                         resolve(loki);
@@ -98,8 +111,12 @@ async function purgeDatabase(fileName = 'curator') {
 }
 
 async function deleteDatabase(mainFileName = 'curator') {
-    return startPromise.then(loki => {
+    // Replace the start promise so we are not holding onto anything
+    // -- probably not necessary.
+    const holdStartPromise = startPromise;
+    startPromise = startPromise.then(loki => {
         repositories = {};
+        // Delete the database files.
         return new Promise((resolve, reject) => {
             try {
                 if (idbAdapter) {
@@ -113,10 +130,12 @@ async function deleteDatabase(mainFileName = 'curator') {
                     });
                 }
             } catch (error) {
+                startPromise = holdStartPromise;
                 reject(error);
             }
         });
     });
+    return startPromise;
 }
 
 async function loadDatabase(databaseJson, mainFileName = 'curator') {

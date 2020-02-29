@@ -30,6 +30,8 @@ export default class TreeText extends React.Component {
         if (this.unsubscribe) this.unsubscribe();
     }
 
+    // Solves a problem where focus is shifted to the EditView the first
+    // time it is rendered.
     focusIfNecessary(actionData) {
         setImmediate(()=>{
             if (!this.inputRef) return;

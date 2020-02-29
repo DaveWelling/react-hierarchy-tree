@@ -1,7 +1,7 @@
 import React from 'react';
 import './toolbar.css';
 import { toast } from 'react-toastify';
-import { saveGoogleDriveFile, openGoogleDriveFile, getAllJsonInFolder } from '../googleDrive';
+import { saveGoogleDriveFile, openGoogleDriveFile, getAllJsonInFolder, removeGoogleDriveFile } from '../googleDrive';
 import FileSelector from './FileSelector';
 import projectContext from '../projectContext';
 import {serializeDatabase, loadDatabase, purgeDatabase} from '../database';
@@ -15,6 +15,7 @@ export default class Toolbar extends React.Component {
         this.save = this.save.bind(this);
         this.open = this.open.bind(this);
         this.openFile = this.openFile.bind(this);
+        this.removeFile = this.removeFile.bind(this);
         this.cancelOpen = this.cancelOpen.bind(this);
         this.clearDatabase = this.clearDatabase.bind(this);
         this.state = {};
@@ -95,6 +96,13 @@ export default class Toolbar extends React.Component {
             log.error(err);
         });
     }
+    removeFile(file) {
+        const newFiles = [...this.state.files];
+        const indexOfFile = newFiles.findIndex(f=>f.title === file.title);
+        newFiles.splice(indexOfFile, 1);
+        this.setState({files: newFiles});
+        return removeGoogleDriveFile(file.title).catch(err=>log.error(err));
+    }
     cancelOpen() {
         // remove files to close dialog
         this.setState({files: undefined});
@@ -107,7 +115,7 @@ export default class Toolbar extends React.Component {
         });
     }
     render() {
-        const { download, upload, save, open, openFile, cancelOpen, clearDatabase } = this;
+        const { download, upload, save, open, openFile, removeFile, cancelOpen, clearDatabase } = this;
         const { files } = this.state;
         return (
             <div className="toolbar">
@@ -134,7 +142,7 @@ export default class Toolbar extends React.Component {
                 <button title="Open from Google Drive" className="toolbar-button" onClick={open}>
                     <i className="material-icons">cloud_download</i>
                 </button>
-                <FileSelector files={files} selectFile={openFile} cancelFileSelection={cancelOpen}/>
+                <FileSelector files={files} removeFile={removeFile} selectFile={openFile} cancelFileSelection={cancelOpen}/>
             </div>
         );
     }

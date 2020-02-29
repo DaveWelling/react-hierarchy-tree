@@ -10,6 +10,7 @@ export default class FileSelector extends React.Component {
         this.highlight = this.highlight.bind(this);
         this.handleDrop = this.handleDrop.bind(this);
         this.fileSelected = this.fileSelected.bind(this);
+        this.remove = this.remove.bind(this);
     }
     highlight(selectedFile) {
         this.setState({ selectedFile });
@@ -25,9 +26,12 @@ export default class FileSelector extends React.Component {
         this.setState({newImage: undefined, selectedFile: undefined});
         this.props.selectFile(selectedFile);
     }
+    remove(file) {
+        this.props.removeFile(file);
+    }
 
     render() {
-        const { highlight, fileSelected } = this;
+        const { highlight, fileSelected, remove } = this;
         const { selectedFile, newImage } = this.state;
         const { files, cancelFileSelection } = this.props;
         const showImage = newImage;
@@ -36,7 +40,7 @@ export default class FileSelector extends React.Component {
             <ReactModal className="toolbarModal" ariaHideApp={false} isOpen={!!files}>
                 <h2 style={{ margin: '.5em' }}> Select a file </h2>
                 <div className="modalFileList">
-                    <div onClick={() => highlight(newImage)} className={(selectedFile && selectedFile === newImage) ? 'modalFileHighlighted modalFile' : 'modalFile'} >
+                    <div onClick={() => highlight(newImage)} className={(selectedFile && selectedFile === newImage) ? 'modalFileHighlighted dropFile' : 'dropFile'} >
                         <Dropzone onDrop={this.handleDrop} multiple={false} className="imageComponent">
                             <img
                                 id={'imgView'}
@@ -55,11 +59,18 @@ export default class FileSelector extends React.Component {
                     </div>
                     {files &&
                         files.map(file => {
-                            let className = selectedFile === file ? 'modalFileHighlighted modalFile' : 'modalFile';
+                            let className = selectedFile === file ? 'modalFile modalFileHighlighted' : 'modalFile';
                             return (
-                                <div onClick={() => highlight(file)} className={className} key={file.id}>
-                                    {file.thumbnailLink && <img src={file.thumbnailLink} />}
-                                    <span className="fileText">{file.title}</span>
+                                <div  key={file.id} className="fileRow">
+                                    <div className="rowBackground">
+                                        <div onClick={() => highlight(file)} className={className}>
+                                            {file.thumbnailLink && <img src={file.thumbnailLink} />}
+                                            <span className="fileText">{file.title}</span>
+                                        </div>
+                                        <span className="removeButton" type="button" onClick={()=>remove(file)} text="Delete this file" >
+                                            <i className="material-icons">delete</i>
+                                        </span>
+                                    </div>
                                 </div>
                             );
                         })}

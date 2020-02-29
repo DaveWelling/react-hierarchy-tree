@@ -1,15 +1,43 @@
 
-
-.modalFile {
-    padding: .5em;
+.dropFile {
     cursor: pointer;
     display: flex;
     align-items: center;
-    flex: 1 0 auto;
+    align-content: flex-end;
+    flex: 0 0 auto;
+}
+
+.modalFile {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    align-content: flex-end;
+    flex: 0 0 auto;
+    background: #0002;
+    border-radius: .3em;
+    padding: 0 .25em 0 .15em;
+}
+
+.modalFile:hover {
+    background:#5ac8fa80;
 }
 
 .fileText {
     padding: .5em;
+    margin-right: 3em;
+}
+
+
+.fileRow {
+    display: flex;
+    justify-content: flex-end;
+    margin-right: 10%;
+}
+
+.rowBackground {
+    display: flex;
+    align-items: center;
+    margin: .1em;
 }
 
 .modalFileList {
@@ -21,7 +49,6 @@
    border: slategray thin solid;
    overflow: auto;
 }
-
 .hiddenImage {
     display: none;
     height: 0;
@@ -46,5 +73,18 @@
 }
 
 .imageTitle {
+    margin-left: 1em;
+}
+
+.removeButton {
     padding-left: 1em;
+    cursor: pointer;
+}
+
+.removeButton:hover {
+    color: red;
+}
+
+.removeButton:click {
+    color: black;
 }
