@@ -12,7 +12,7 @@ export default function DrawingView({ subModel, projectName, update }) {
         color: '#ffffff'
     });
     // Default drawingModel with undefined drawing
-    const [drawingModel, setDrawingModel] = useState(subModel);
+    const [drawingModel, setDrawingModel] = useState({content:{}, ...subModel});
     // picture file listing
     const [files, setFiles] = useState();
     const canvasRef = useRef();

@@ -77,10 +77,14 @@ export default class CanvasWrap extends React.Component {
             opt.e.preventDefault();
             opt.e.stopPropagation();
         });
-
-        const resizeObserver = (this.resizeObserver = new ResizeObserver(event => this.onResize(event)));
+        console.log('got here');
+        try {
+        const resizeObserver = (this.resizeObserver = new window.ResizeObserver(event => this.onResize(event)));
         resizeObserver.observe(parentElement);
         this.onResize([{ target: parentElement }]); // Set the initial size to match parent interior;
+        } catch (err) {
+            console.error(err.message);
+        }
 
         if (this.props.drawing) {
             canvas.loadFromJSON(this.props.drawing);

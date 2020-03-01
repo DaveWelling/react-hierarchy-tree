@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { Toolbar } from './copiedEmotionComponents';
 import MarkButton from './MarkButton';
 import BlockButton from './BlockButton';
+import PrintButton from './PrintButton';
 
 export default function BlockToolbar({editor}) {
     return (
@@ -17,6 +18,7 @@ export default function BlockToolbar({editor}) {
             <BlockButton editor={editor} type="block-quote" icon="format_quote" />
             <BlockButton editor={editor} type="numbered-list" icon="format_list_numbered" />
             <BlockButton editor={editor} type="bulleted-list" icon="format_list_bulleted" />
+            <PrintButton editor={editor} icon="print" />
         </Toolbar>
     );
 }

@@ -5,7 +5,7 @@ const WorkboxPlugin = require('workbox-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const WebpackPwaManifest = require('webpack-pwa-manifest');
 const path = require('path');
-
+const package = require('./package.json');
 module.exports = {
     devtool: 'source-map',
     mode: process.env.NODE_ENV,
@@ -76,6 +76,10 @@ module.exports = {
             {
                 from: './src/apple-touch-icon.png',
                 to: 'apple-touch-icon.png'
+            },
+            {
+                from: './src/privacyPolicy.html',
+                to: 'privacyPolicy.html'
             }
         ]),
         // Make browser version avoid using Node specific stuff
@@ -86,7 +90,8 @@ module.exports = {
         new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/), // dropping locales makes moment WAY smaller.
         new webpack.DefinePlugin({
             __PRODUCTION__: process.env.NODE_ENV === 'production',
-            __TESTING__: false
+            __TESTING__: false,
+            __VERSION__: "'"+ package.version.toString() + "'"
         }),
         new HtmlWebPackPlugin({
             template: 'src/index.html',

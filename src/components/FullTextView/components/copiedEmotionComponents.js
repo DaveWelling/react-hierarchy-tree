@@ -14,9 +14,8 @@ export const Button = React.forwardRef(
         css`
           cursor: pointer;
           color: ${reversed
-            ? active ? 'white' : '#aaa'
-            : active ? 'white' : '#ccc'};
-          background: ${active ? 'darkslategray' : 'transparent'};
+            ? active ? 'white' : 'white'
+            : active ? 'white' : '#999'};
         `
       )}
     />
@@ -28,7 +27,7 @@ export const EditorValue = React.forwardRef(
     const textLines = value.document.nodes
       .map(node => node.text)
       .toArray()
-      .join('\n')
+      .join('\n');
     return (
       <div
         ref={ref}
@@ -40,7 +39,7 @@ export const EditorValue = React.forwardRef(
           `
         )}
       >
-        <div
+        {/* <div
           className={css`
             font-size: 14px;
             padding: 5px 20px;
@@ -50,7 +49,7 @@ export const EditorValue = React.forwardRef(
           `}
         >
           Slate's value as text
-        </div>
+        </div> */}
         <div
           className={css`
             color: #404040;
@@ -65,7 +64,7 @@ export const EditorValue = React.forwardRef(
           {textLines}
         </div>
       </div>
-    )
+    );
   }
 );
 

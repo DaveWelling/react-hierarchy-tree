@@ -1,7 +1,15 @@
+
 .fullTextView {
-    height: calc(100% - 75px);
+    height: 100%;
     display: flex;
     flex-direction: column;
+}
+
+@supports (-webkit-touch-callout: none) {
+    /* CSS specific to iOS devices */
+    .fullTextView {
+        height: calc(100% - 75px);
+    }
 }
 
 .editor {

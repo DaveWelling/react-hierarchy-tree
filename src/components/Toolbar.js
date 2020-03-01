@@ -143,6 +143,7 @@ export default class Toolbar extends React.Component {
                     <i className="material-icons">cloud_download</i>
                 </button>
                 <FileSelector files={files} removeFile={removeFile} selectFile={openFile} cancelFileSelection={cancelOpen}/>
+                <span className="appVersion">{__VERSION__}</span>
             </div>
         );
     }

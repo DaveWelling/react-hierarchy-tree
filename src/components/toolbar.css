@@ -55,3 +55,11 @@
     color: red;
     font-weight: bold;
 }
+
+.appVersion {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    color: darkgray;
+    font-size: 6pt;
+}

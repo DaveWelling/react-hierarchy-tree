@@ -82,7 +82,9 @@ export default function FullTextView({subModel, update}) {
     return (
         <div className="fullTextView">
             <BlockToolbar editor={editorRef.current} editorState={editorState} />
+            <div style={{height: '100%', overflow:'auto'}}>
             <Editor
+                id="slateEditor"
                 className="editor"
                 spellCheck
                 autoFocus
@@ -94,6 +96,7 @@ export default function FullTextView({subModel, update}) {
                 renderBlock={RenderBlock}
                 renderMark={RenderMark}
             />
+            </div>
         </div>
     );
 }
