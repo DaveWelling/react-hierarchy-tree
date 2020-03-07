@@ -35,7 +35,8 @@ export default class EditableShell extends React.Component {
 
     shouldComponentUpdate(nextProps) {
         const el = ReactDOM.findDOMNode(this);
-        if (nextProps.model.title !== el.innerHTML) {
+        if (nextProps.model.title !== el.innerHTML ||
+            nextProps.model.title !== this.props.model.title) {
             return true;
         }
         return false;
@@ -158,8 +159,8 @@ export default class EditableShell extends React.Component {
     render() {
         const { onInput, onPaste, onKeyDown, onKeyUp, onMouseUp, onFocus } = this;
         const { model: {title}, className } = this.props;
-        const winningClassName = className || 'editable-text';
-
+        let winningClassName = className || 'editable-text';
+        winningClassName = !title ? winningClassName + ' placeholder' : winningClassName;
         return (
             <div
                 className={winningClassName}
@@ -191,7 +192,8 @@ EditableShell.propTypes = {
     onChange: propTypes.func,
     onFocus: propTypes.func,
     model: propTypes.object,
-    className: propTypes.string
+    className: propTypes.string,
+    placeholder: propTypes.string
 };
 
 

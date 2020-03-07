@@ -2,7 +2,7 @@
     border: none;
     width: 100%;
     color: white;
-    background-color: black;
+    background-color: #ffffff12;
     padding: .1em .25em .1em .25em;
     font-size: medium;
     cursor: text;
@@ -22,3 +22,10 @@
 /* .tree-text:hover {
     border: thin black solid;
 } */
+
+.placeholder {
+    color: #5d5d5d;
+}
+.placeholder::after {
+    content: "Enter a node name"
+}

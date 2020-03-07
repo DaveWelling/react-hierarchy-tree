@@ -119,6 +119,9 @@ export default class Toolbar extends React.Component {
         const { files } = this.state;
         return (
             <div className="toolbar">
+                <a title="What is this?" className="toolbar-button" href="./home.html#what-is-this">
+                    <i className="material-icons">help</i>
+                </a>
                 <button title="Clear everything" className="toolbar-button" onClick={clearDatabase}>
                     <i className="material-icons clearButton">clear</i>
                 </button>

@@ -7,6 +7,10 @@
     justify-content: space-evenly;
 }
 
+a.toolbar-button {
+    padding-top: 4px;
+}
+
 .toolbar-button {
     background: transparent;
     color: white;

@@ -132,6 +132,7 @@ export default class TreeText extends React.Component {
                 onKeyDown={onKeyDown}
                 onChange={onChange}
                 onFocus={onFocus}
+                placeholder="Enter a node name"
             />
         );
     }

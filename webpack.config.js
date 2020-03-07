@@ -5,7 +5,7 @@ const WorkboxPlugin = require('workbox-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const WebpackPwaManifest = require('webpack-pwa-manifest');
 const path = require('path');
-const package = require('./package.json');
+const packageInfo = require('./package.json');
 module.exports = {
     devtool: 'source-map',
     mode: process.env.NODE_ENV,
@@ -91,7 +91,7 @@ module.exports = {
         new webpack.DefinePlugin({
             __PRODUCTION__: process.env.NODE_ENV === 'production',
             __TESTING__: false,
-            __VERSION__: "'"+ package.version.toString() + "'"
+            __VERSION__: "'v"+ packageInfo.version.toString() + "'"
         }),
         new HtmlWebPackPlugin({
             template: 'src/index.html',
