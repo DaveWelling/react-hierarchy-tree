@@ -80,6 +80,18 @@ module.exports = {
             {
                 from: './src/privacyPolicy.html',
                 to: 'privacyPolicy.html'
+            },
+            {
+                from: './src/home.html',
+                to: 'home.html'
+            },
+            {
+                from: './src/home.css',
+                to: 'home.css'
+            },
+            {
+                from: './src/Background.jpg',
+                to: 'Background.jpg'
             }
         ]),
         // Make browser version avoid using Node specific stuff

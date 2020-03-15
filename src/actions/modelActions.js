@@ -56,7 +56,7 @@ async function getPreviousSibling(_id, collectionName = defaultCollectionName) {
     let repo = await getRepository(collectionName);
     let record = await repo.get(_id);
     let allSiblings = await getChildren(record.parentId, collectionName);
-    allSiblings = allSiblings.sort((a, b) => a.seq - b.seq);
+    allSiblings = allSiblings.sort((a, b) => a.sequence - b.sequence);
     let recordIndex = allSiblings.findIndex(sib => sib._id === _id);
     if (recordIndex > 0) return allSiblings[recordIndex - 1];
 }
@@ -65,7 +65,7 @@ async function getNextSibling(_id, collectionName = defaultCollectionName) {
     let repo = await getRepository(collectionName);
     let record = await repo.get(_id);
     let allSiblings = await getChildren(record.parentId, collectionName);
-    allSiblings = allSiblings.sort((a, b) => a.seq - b.seq);
+    allSiblings = allSiblings.sort((a, b) => a.sequence - b.sequence);
     let recordIndex = allSiblings.findIndex(sib => sib._id === _id);
     if (recordIndex < allSiblings.length) return allSiblings[recordIndex + 1];
 }
@@ -197,6 +197,13 @@ async function addChild(
     type = config.defaultModelType,
     collectionName = defaultCollectionName
 ) {
+
+    if (typeof sequenceAfterPreviousChild === 'undefined') {
+        const nextSibling = await getNextSibling(previousChild._id, collectionName);
+        if (nextSibling) {
+            sequenceAfterPreviousChild = nextSibling.sequence;
+        }
+    }
     // increment sequence by half of the last digit of the previous child's sequence
     const newSequence = sequenceAfterPreviousChild
         ? previousChild.sequence + (sequenceAfterPreviousChild - previousChild.sequence) / 2
@@ -229,15 +236,17 @@ async function mergeWithPreviousSibling(model, collectionName = defaultCollectio
     }
     if (previousSibling) {
         if (model.title !== '') {
-            await valueChange(previousSibling._id, 'title', previousSibling.title + model.title, collectionName);
+            const firstPart = previousSibling.title || '';
+            const secondPart = model.title || '';
+            await valueChange(previousSibling._id, 'title', firstPart + secondPart, collectionName);
             // Place cursor at start of merged value
             eventSink.publish({
                 type: 'focus_project_model',
                 focus: {
                     _id: previousSibling._id,
                     model: previousSibling,
-                    selectionStart: previousSibling.title.length,
-                    selectionEnd: previousSibling.title.length
+                    selectionStart: previousSibling.title ? previousSibling.title.length : 0,
+                    selectionEnd: previousSibling.title ? previousSibling.title.length : 0
                 }
             });
         }
@@ -311,7 +320,10 @@ async function moveToNext(model, collectionName = defaultCollectionName) {
     if (focusId === undefined) {
         // Try to move to next sibling
         let nextSibling = await getNextSibling(model._id, collectionName);
-        if (nextSibling) focusId = nextSibling._id;
+        if (nextSibling) {
+            focusId = nextSibling._id;
+            focusModel = nextSibling;
+        }
 
         // No parent - Nowhere else to go;
         else if (!model.parentId) return;
@@ -333,12 +345,14 @@ async function moveToNext(model, collectionName = defaultCollectionName) {
     });
 }
 
-function focus(model){
+function focus(model, selectionStart, selectionEnd){
     eventSink.publish({
         type: 'focus_project_model',
         focus: {
             _id: model._id,
-            model
+            model,
+            selectionStart,
+            selectionEnd
         }
     });
 }

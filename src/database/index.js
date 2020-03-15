@@ -181,14 +181,16 @@ async function serializeDatabase() {
     });
 }
 
-window.addEventListener('beforeunload', function (e) {
-    logging.info('trying to save');
-    startPromise.then(loki => {
-        if (idbAdapter) {
-            // Export, as in export to disk, i.e. indexedDb
-            adapter.exportDatabase(_mainFileName, loki, ()=>logging.info('saved.'));
-        } else {
-            loki.saveDatabase(()=>logging.info('saved.'));
-        }
+if (global.window) {
+    window.addEventListener('beforeunload', function (e) {
+        logging.info('trying to save');
+        startPromise.then(loki => {
+            if (idbAdapter) {
+                // Export, as in export to disk, i.e. indexedDb
+                adapter.exportDatabase(_mainFileName, loki, ()=>logging.info('saved.'));
+            } else {
+                loki.saveDatabase(()=>logging.info('saved.'));
+            }
+        });
     });
-});
+}

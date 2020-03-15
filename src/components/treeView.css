@@ -14,3 +14,11 @@
     padding: .1em .2em .1em .2em;
     min-width: 7em;
 }
+
+.node-instructions {
+    margin: 1em;
+    font-size: .75em;
+    color: slategray;
+    font-style: italic;
+    text-align: right;
+}

@@ -14,7 +14,9 @@ import EditableShell from './EditableShell';
 import { subscribe } from '../eventSink';
 
 import './treeText.css';
+import TreeViewContext from './TreeViewContext';
 
+let staticActive;
 export default class TreeText extends React.Component {
     constructor(props) {
         super(props);
@@ -33,7 +35,7 @@ export default class TreeText extends React.Component {
     // Solves a problem where focus is shifted to the EditView the first
     // time it is rendered.
     focusIfNecessary(actionData) {
-        setImmediate(()=>{
+        setImmediate(() => {
             if (!this.inputRef) return;
             if (actionData._id === this.props.model._id && document.activeElement !== this.inputRef.domElementRef) {
                 this.inputRef.focus();
@@ -57,7 +59,7 @@ export default class TreeText extends React.Component {
                 const { addSibling } = this;
                 const offset = e.target.selectionStart;
                 setImmediate(function() {
-                    // setImmediate is necessary.  Event must finish before dispatch.
+                    // setImmediate is necessary.  Key event must finish before dispatch.
                     addSibling(offset);
                 });
                 e.preventDefault();
@@ -111,24 +113,32 @@ export default class TreeText extends React.Component {
         const newValue = value.substr(0, cursorPosition);
         const siblingValue = value.substr(cursorPosition).trim();
         valueChange(model._id, 'title', newValue);
-        addChild(model, siblingValue, nextSequence, model.type);
+        addChild(model, { title: siblingValue }, nextSequence, model.type);
     }
 
     onFocus(e) {
-        focus(e.target.value);
+        this.context.setActiveTreeTextId(this.props._id);
+        focus(e.target.value, e.target.selectionStart, e.target.selectionEnd);
     }
 
     render() {
-        const { onChange, onKeyDown, onFocus } = this;
+        const {
+            onChange,
+            onKeyDown,
+            onFocus,
+            context: { activeTreeTextId },
+            props: { _id, model }
+        } = this;
+        let className = activeTreeTextId === _id ? 'tree-text tree-text-focused' : 'tree-text';
         return (
             <EditableShell
                 ref={input => {
                     this.inputRef = input;
                 }}
-                id={this.props.id}
+                id={_id}
                 type="textbox"
-                className="tree-text"
-                model={this.props.model}
+                className={className}
+                model={model}
                 onKeyDown={onKeyDown}
                 onChange={onChange}
                 onFocus={onFocus}
@@ -138,5 +148,9 @@ export default class TreeText extends React.Component {
     }
 }
 TreeText.propTypes = {
-    model: PropTypes.object
+    model: PropTypes.object,
+    value: PropTypes.string,
+    _id: PropTypes.string
 };
+
+TreeText.contextType = TreeViewContext;

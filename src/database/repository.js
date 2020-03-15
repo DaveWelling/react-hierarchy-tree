@@ -9,9 +9,11 @@ module.exports = class Repository {
         };
 
         this.publishChange = this.publishChange.bind(this);
+        this.publishDelete = this.publishDelete.bind(this);
 
         collection.on('update', this.publishChange);
         collection.on('insert', this.publishChange);
+        collection.on('delete', this.publishDelete);
     }
 
     onParentChange(parentId, callback) {
@@ -50,6 +52,11 @@ module.exports = class Repository {
                 delete this._privates.listenersById[_id];
             }
         };
+    }
+
+    publishDelete(model) {
+        let cbs = this._privates.listenersByParentId[model.parentId];
+        if (cbs) cbs.forEach(cb=>cb(model, false));
     }
 
     publishChange(model, oldModel){

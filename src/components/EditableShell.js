@@ -36,7 +36,8 @@ export default class EditableShell extends React.Component {
     shouldComponentUpdate(nextProps) {
         const el = ReactDOM.findDOMNode(this);
         if (nextProps.model.title !== el.innerHTML ||
-            nextProps.model.title !== this.props.model.title) {
+            nextProps.model.title !== this.props.model.title ||
+            nextProps.className !== this.props.className) {
             return true;
         }
         return false;

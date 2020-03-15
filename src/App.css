@@ -5,7 +5,7 @@
     display: flex;
     flex-direction: row;
     justify-content: stretch;
-    color: white;
+    color: #ffffffe0;
     background-color: black;
 }
 
@@ -21,15 +21,11 @@ select {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    border-left-style: hidden;
-    border-right-style: hidden;
-    border-bottom-color: #77889980;
+    border-color: #ffffff12;
     padding: 0.25em 1.5em 0.25em 0.5em;
-    border-radius: 3px;
     font-size: small;
     color: lightslategray;
-    background: black;
-    border-top-color: lightslategray;
+    background: #ffffff12;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
@@ -52,7 +48,7 @@ select {
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
     top: 0.6em;
-    right: 0.55em;
+    right: 0.45em;
     border-top: 9px solid lightslategray;
 }
 select::-ms-expand {

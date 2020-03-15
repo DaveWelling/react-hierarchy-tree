@@ -1,7 +1,7 @@
 .tree-text {
     border: none;
     width: 100%;
-    color: white;
+    color: #ffffffe0;
     background-color: #ffffff12;
     padding: .1em .25em .1em .25em;
     font-size: medium;
@@ -10,6 +10,11 @@
     line-height: 1.1em;
     margin-top: .1em;
 }
+
+.tree-text-focused {
+    background-color: #02181a
+}
+
 .tree-text:hover {
     border: thin lightgray solid;
     border-radius: 3px;

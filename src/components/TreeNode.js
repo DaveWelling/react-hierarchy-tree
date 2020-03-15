@@ -150,7 +150,9 @@ export default class TreeNode extends React.Component {
     }
 
     updateChildren(modelId) {
-        getChildren(modelId).then(childrenModels => {
+        getChildren(modelId).then(results => {
+            let childrenModels = [...results];
+            childrenModels = childrenModels.sort((a, b) => a.sequence - b.sequence);
             this.setState({
                 childrenModels
             });
