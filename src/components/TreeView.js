@@ -118,7 +118,7 @@ export default class TreeView extends React.Component {
                         />
                     );
                 })}
-                <div className="node-instructions">Type Enter key&#x23ce; for a new line or Tab key to indent.</div>
+                <div className="node-instructions">Type Enter key&#x23ce; for a new line or Tab key&#x21b9; to indent.</div>
             </div>
         </TreeViewContext.Provider>);
     }

@@ -11,6 +11,19 @@ module.exports = class Repository {
         this.publishChange = this.publishChange.bind(this);
         this.publishDelete = this.publishDelete.bind(this);
 
+        /* These seem to be the available events:
+            this.events = {
+                'insert': [],
+                'update': [],
+                'pre-insert': [],
+                'pre-update': [],
+                'close': [],
+                'flushbuffer': [],
+                'error': [],
+                'delete': [],
+                'warning': []
+            };
+        */
         collection.on('update', this.publishChange);
         collection.on('insert', this.publishChange);
         collection.on('delete', this.publishDelete);

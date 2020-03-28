@@ -4,8 +4,12 @@ import './drawingView.css';
 import { getAllPicturesInFolder, saveNewImage } from '../../googleDrive';
 import FileSelector from '../FileSelector';
 import CanvasWrap from './CanvasWrap';
+import cuid from 'cuid';
+import logging from '../../logging';
 
 export default function DrawingView({ subModel, projectName, update }) {
+    const undoStack = useRef(new fixedSizeStack());
+    const redoStack = useRef(new fixedSizeStack());
     const [canvasSettings, setCanvasSettings] = useState({
         weight: 1,
         mode: 'draw',
@@ -19,8 +23,11 @@ export default function DrawingView({ subModel, projectName, update }) {
 
 
     function onChange(change) {
-        let oldSubModel = drawingModel;
-        let newSubModel = { ...oldSubModel, content: {...oldSubModel.content, ...change }};
+        const oldSubModel = drawingModel;
+        const undoId = cuid();
+        logging.debug(`onChange undoId: ${undoId}`);
+        undoStack.current.push({...oldSubModel, content: {...oldSubModel.content, undoId}});
+        const newSubModel = { ...oldSubModel, content: {...oldSubModel.content, ...change, undoId: undefined }};
         setDrawingModel(newSubModel);
         update(newSubModel);
     }
@@ -29,6 +36,24 @@ export default function DrawingView({ subModel, projectName, update }) {
         onChange({
             drawing: undefined
         });
+    }
+
+    function onUndo() {
+        if (undoStack.current.length()  === 0) return;
+        const previous = undoStack.current.pop();
+        redoStack.current.push(drawingModel);
+        setDrawingModel(previous);
+        // Remove undoId before sending to database (so reloaded models will not begin with an undoId)
+        const toSave = {...previous, content: {...previous.content, undoId: undefined}};
+        update(toSave);
+    }
+
+    function onRedo() {
+        if (redoStack.current.length() === 0) return;
+        const next = redoStack.current.pop();
+        undoStack.current.push(drawingModel);
+        setDrawingModel(next);
+        update(next);
     }
 
     function onSettingsChange(e) {
@@ -91,6 +116,7 @@ export default function DrawingView({ subModel, projectName, update }) {
                 backgroundImage={drawingModel.content.backgroundImage}
                 canvasSettings={canvasSettings}
                 drawing={drawingModel.content.drawing}
+                undoId={drawingModel.content.undoId || 0}
             />
             <div className="canvasToolbar">
                 <button className="canvasButton" onClick={onClear}>
@@ -98,6 +124,12 @@ export default function DrawingView({ subModel, projectName, update }) {
                 </button>
                 <button className="canvasButton" onClick={setBackground}>
                     <i className="material-icons">add_photo_alternate</i>
+                </button>
+                <button className="canvasButton" onClick={onUndo}>
+                    <i className="material-icons">undo</i>
+                </button>
+                <button className="canvasButton" onClick={onRedo}>
+                    <i className="material-icons">redo</i>
                 </button>
                 <label>Thickness</label>
                 <input
@@ -171,3 +203,28 @@ DrawingView.propTypes = {
     projectName: PropTypes.string.isRequired,
     update: PropTypes.func.isRequired
 };
+
+
+function fixedSizeStack(_stackLimit=10) {
+    const _stack = [];
+
+    function length() {
+        return _stack.length;
+    }
+
+    function push(any) {
+        _stack.push(any);
+        if (_stack.length > _stackLimit) {
+            _stack.shift();
+        }
+    }
+
+    function pop() {
+        return _stack.pop();
+    }
+
+    function log(prefix) {
+        logging.info(`${prefix} ${_stack.join('\n')}`);
+    }
+    return { push, pop, length, log };
+}

@@ -77,7 +77,6 @@ export default class CanvasWrap extends React.Component {
             opt.e.preventDefault();
             opt.e.stopPropagation();
         });
-        console.log('got here');
         try {
         const resizeObserver = (this.resizeObserver = new window.ResizeObserver(event => this.onResize(event)));
         resizeObserver.observe(parentElement);
@@ -95,7 +94,7 @@ export default class CanvasWrap extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const { drawing, canvasSettings, backgroundImage, id } = this.props;
+        const { drawing, canvasSettings, backgroundImage, id, undoId } = this.props;
         Object.keys(canvasSettings).forEach(key => {
             if (prevProps.canvasSettings[key] !== canvasSettings[key]) {
                 switch (key) {
@@ -117,7 +116,7 @@ export default class CanvasWrap extends React.Component {
         if (drawing === undefined) {
             this.canvas.clear();
         }
-        if (prevProps.id !== id) {
+        if (prevProps.id !== id || prevProps.undoId !== undoId) {
             if (drawing !== undefined) {
                 this.suspendChangeReporting = true;
                 this.canvas.loadFromJSON(drawing);
@@ -189,7 +188,7 @@ export default class CanvasWrap extends React.Component {
 
     onChange() {
         if (this.suspendChangeReporting) return;
-
+        if (this.props.undoId) return;
         this.props.onChange({ drawing: this.canvas.toObject() });
     }
 
