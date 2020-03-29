@@ -55,7 +55,9 @@ export default function DrawingView({ subModel, projectName, update }) {
     }
 
     function removeRasters(drawing) {
+        if (!drawing || !drawing[0]) return;
         const layer = drawing[0][1];
+        if (!layer || !layer.children) return;
         for (let i = layer.children.length - 1; i >= 0 ; i--) {
             const child = layer.children[i];
             if (child[0] === 'Raster') {
