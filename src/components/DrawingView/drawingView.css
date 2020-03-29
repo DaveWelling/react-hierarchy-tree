@@ -33,3 +33,15 @@
 .canvasButton:focus {
     outline: none;
 }
+
+.canvasButton:disabled {
+    color: #575757
+}
+
+.canvasButton:disabled:hover {
+    color: #575757;
+}
+
+canvas {
+    cursor: crosshair;
+}

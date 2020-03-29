@@ -146,7 +146,7 @@ export function getAllPicturesInFolder(projectName) {
                 .request({
                     path: '/drive/v2/files',
                     method: 'GET',
-                    params: { q: `mimeType contains "image/" and "${folderId}" in parents` }
+                    params: { q: 'mimeType contains "image/"' }
                 })
                 .then(request => {
                     return request.result.items.map(i => ({
