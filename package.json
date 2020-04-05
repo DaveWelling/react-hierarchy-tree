@@ -1,6 +1,6 @@
 {
   "name": "react-hierarchy-tree",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Create a hierarchy of objects that may be edited",
   "private": false,
   "scripts": {
