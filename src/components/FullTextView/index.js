@@ -87,7 +87,6 @@ export default function FullTextView({subModel, update}) {
                 id="slateEditor"
                 className="editor"
                 spellCheck
-                autoFocus
                 placeholder="Begin writing here..."
                 onChange={onChange}
                 value={editorState}

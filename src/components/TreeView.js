@@ -10,7 +10,8 @@ import { subscribe } from '../eventSink';
 
 const defaultRoot = {
     title: '',
-    _id: 'root'
+    _id: 'root',
+    sequence: 0
 };
 
 export default class TreeView extends React.Component {
@@ -68,12 +69,14 @@ export default class TreeView extends React.Component {
     }
 
     updateChildren(modelId) {
-        getChildren(modelId).then(childrenModels => {
+        getChildren(modelId).then(results => {
+            let childrenModels = [...results];
+            childrenModels = childrenModels.sort((a, b) => a.sequence - b.sequence);
             this.setState({
                 childrenModels
             });
             if (childrenModels.length === 0) {
-                const firstModel = { title: '', parentId: 'root', type: 'summary' };
+                const firstModel = { title: '', parentId: 'root', type: 'summary', sequence: 0 };
                 this._private.repository.create(firstModel);
             }
         });

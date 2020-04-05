@@ -9,7 +9,9 @@
     "clean": "rimraf dist/*",
     "deploy": "gcloud app deploy",
     "coverage": "nyc mocha test.js",
-    "start": "cross-env NODE_ENV=development webpack-dev-server --hot",
+    "COMMENT": "Google app engine wants 'start' to be the thing it uses to start so don't put webpack-dev-server in there",
+    "start": "node app.js",
+    "startDev": "cross-env NODE_ENV=development webpack-dev-server --hot",
     "test": "mocha"
   },
   "dependencies": {

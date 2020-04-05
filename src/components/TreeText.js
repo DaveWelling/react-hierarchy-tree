@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
     makeChildOfPreviousSibling,
-    addChild,
+    addSibling,
     valueChange,
     makeSiblingOfParent,
     mergeWithPreviousSibling,
@@ -16,13 +16,11 @@ import { subscribe } from '../eventSink';
 import './treeText.css';
 import TreeViewContext from './TreeViewContext';
 
-let staticActive;
 export default class TreeText extends React.Component {
     constructor(props) {
         super(props);
         this.onChange = this.onChange.bind(this);
         this.onKeyDown = this.onKeyDown.bind(this);
-        this.addSibling = this.addSibling.bind(this);
         this.onFocus = this.onFocus.bind(this);
         this.focusIfNecessary = this.focusIfNecessary.bind(this);
         this.unsubscribe = subscribe('focus_project_model', this.focusIfNecessary);
@@ -32,18 +30,28 @@ export default class TreeText extends React.Component {
         if (this.unsubscribe) this.unsubscribe();
     }
 
-    // Solves a problem where focus is shifted to the EditView the first
-    // time it is rendered.
     focusIfNecessary(actionData) {
         setImmediate(() => {
+            //if (actionData.model.sequence > 0) debugger;
+            //console.debug('inputRef exists: ', !!this.inputRef);
             if (!this.inputRef) return;
+            //console.debug('actionData: ', JSON.stringify(actionData, undefined, 3));
             if (actionData._id === this.props.model._id && document.activeElement !== this.inputRef.domElementRef) {
                 this.inputRef.focus();
+                // setImmediate(()=>{
+                //     if (document.activeElement !== this.inputRef.domElementRef) {
+                //         this.inputRef.focus();
+                //     }
+                // });
                 let { selectionStart, selectionEnd } = actionData;
                 if (typeof selectionStart !== 'undefined') {
                     selectionEnd = selectionEnd || selectionStart;
                     this.inputRef.setSelectionRange(selectionStart, selectionEnd);
                 }
+                this.context.setActiveTreeTextId(this.props._id);
+                // I can't figure out why the up arrow doesn't (completely) work the first time
+                // The down arrow does and it is pretty much the same code.
+                this.focusIfNecessary(actionData);
             }
         });
     }
@@ -56,26 +64,34 @@ export default class TreeText extends React.Component {
         switch (e.keyCode) {
             case 13: {
                 // Enter
-                const { addSibling } = this;
+                const { model } = this.props;
                 const offset = e.target.selectionStart;
                 setImmediate(function() {
                     // setImmediate is necessary.  Key event must finish before dispatch.
-                    addSibling(offset);
+                    addSibling(model, offset);
                 });
                 e.preventDefault();
                 break;
             }
             case 38: {
                 // Arrow up
-                let { model } = this.props;
-                moveFocusToPrevious(model);
+                let { model, tryCollapse } = this.props;
+                if (e.ctrlKey) {
+                    tryCollapse();
+                } else {
+                    moveFocusToPrevious(model);
+                }
                 e.preventDefault();
                 break;
             }
             case 40: {
                 // Arrow down
-                let { model } = this.props;
-                moveToNext(model);
+                let { model, tryExpand } = this.props;
+                if (e.ctrlKey) {
+                    tryExpand();
+                } else {
+                    moveToNext(model);
+                }
                 e.preventDefault();
                 break;
             }
@@ -106,14 +122,6 @@ export default class TreeText extends React.Component {
             default:
                 break;
         }
-    }
-
-    addSibling(cursorPosition) {
-        const { value, model, nextSequence } = this.props;
-        const newValue = value.substr(0, cursorPosition);
-        const siblingValue = value.substr(cursorPosition).trim();
-        valueChange(model._id, 'title', newValue);
-        addChild(model, { title: siblingValue }, nextSequence, model.type);
     }
 
     onFocus(e) {

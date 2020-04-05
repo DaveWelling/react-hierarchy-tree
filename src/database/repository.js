@@ -5,7 +5,7 @@ module.exports = class Repository {
         this._privates = {
             collection,
             listenersById: {},
-            listenersByParentId: {}
+            listenersByParentId: {},
         };
 
         this.publishChange = this.publishChange.bind(this);
@@ -37,7 +37,7 @@ module.exports = class Repository {
             this._privates.listenersByParentId[parentId] = [callback];
         }
         // Return an unsubscribe function
-        return ()=>{
+        return () => {
             const listenersAtUnsubscribe = this._privates.listenersByParentId[parentId];
             const callbackIndex = listenersAtUnsubscribe.indexOf(callback);
             if (listenersAtUnsubscribe.length > 1 && callbackIndex >= 0) {
@@ -56,7 +56,7 @@ module.exports = class Repository {
             this._privates.listenersById[_id] = [callback];
         }
         // Return an unsubscribe function
-        return ()=>{
+        return () => {
             const listenersAtUnsubscribe = this._privates.listenersById[_id];
             const callbackIndex = listenersAtUnsubscribe.indexOf(callback);
             if (listenersAtUnsubscribe.length > 1 && callbackIndex >= 0) {
@@ -69,19 +69,24 @@ module.exports = class Repository {
 
     publishDelete(model) {
         let cbs = this._privates.listenersByParentId[model.parentId];
-        if (cbs) cbs.forEach(cb=>cb(model, false));
+        if (cbs) cbs.forEach((cb) => cb(model, false));
     }
 
-    publishChange(model, oldModel){
+    publishChange(model, oldModel) {
         let cbs = this._privates.listenersById[model._id];
-        if (cbs) cbs.forEach(cb=>cb(model));
-        // parent has changed
-        if (model.parentId && (!oldModel || (oldModel.parentId !==model.parentId))) {
-            cbs = this._privates.listenersByParentId[model.parentId];
-            if (cbs) cbs.forEach(cb=>cb(model, true));
-            if (oldModel && oldModel.parentId) {
-                cbs = this._privates.listenersByParentId[oldModel.parentId];
-                if (cbs) cbs.forEach(cb=>cb(model, false));
+        if (cbs) cbs.forEach((cb) => cb(model));
+        if (model.parentId) {
+            // parent has changed
+            if (!oldModel || oldModel.parentId !== model.parentId) {
+                cbs = this._privates.listenersByParentId[model.parentId];
+                if (cbs) cbs.forEach((cb) => cb(model, true));
+                if (oldModel && oldModel.parentId) {
+                    cbs = this._privates.listenersByParentId[oldModel.parentId];
+                    if (cbs) cbs.forEach((cb) => cb(model, false));
+                }
+            } else {
+                cbs = this._privates.listenersByParentId[model.parentId];
+                if (cbs) cbs.forEach((cb) => cb(model, false));
             }
         }
     }
@@ -92,10 +97,11 @@ module.exports = class Repository {
      * @param {string} propertyName If an id is passed to _idOrModel, then this is the property to update for that id
      * @param {any} value If an id is passed to _idOrModel, then this is the value to set the property to for that id
      */
-    update(_idOrModel, propertyName, value, upsert=false) {
-        return new Promise((resolve, reject)=>{
+    update(_idOrModel, propertyName, value, upsert = false) {
+        return new Promise((resolve, reject) => {
             try {
-                let updateDoc, _id = _idOrModel;
+                let updateDoc,
+                    _id = _idOrModel;
                 if (typeof _idOrModel === 'object') {
                     updateDoc = _idOrModel;
                     _id = _idOrModel._id;
@@ -103,18 +109,18 @@ module.exports = class Repository {
                 let existingDoc = this._privates.collection.by('_id', _id);
                 if (!existingDoc) {
                     if (!upsert) throw new Error('Cannot find a document with _id = ' + _id);
-                    else return this.create(updateDoc ? updateDoc : {[propertyName]: value});
+                    else return this.create(updateDoc ? updateDoc : { [propertyName]: value });
                 }
                 let newDoc;
                 if (updateDoc) {
                     newDoc = {
                         ...existingDoc,
-                        ...updateDoc
+                        ...updateDoc,
                     };
                 } else {
                     newDoc = {
                         ...existingDoc,
-                        [propertyName]: value
+                        [propertyName]: value,
                     };
                 }
                 this._privates.collection.update(newDoc);
@@ -125,7 +131,7 @@ module.exports = class Repository {
         });
     }
     create(data) {
-        return new Promise((resolve, reject)=>{
+        return new Promise((resolve, reject) => {
             try {
                 if (!data._id) {
                     data._id = cuid();
@@ -137,7 +143,7 @@ module.exports = class Repository {
         });
     }
     get(_id) {
-        return new Promise((resolve, reject)=>{
+        return new Promise((resolve, reject) => {
             try {
                 resolve(this._privates.collection.by('_id', _id));
             } catch (err) {
@@ -146,7 +152,7 @@ module.exports = class Repository {
         });
     }
     find(query) {
-        return new Promise((resolve, reject)=>{
+        return new Promise((resolve, reject) => {
             try {
                 resolve(this._privates.collection.find(query));
             } catch (err) {
@@ -155,6 +161,6 @@ module.exports = class Repository {
         });
     }
     remove(_id) {
-        return this.get(_id).then(doc=>this._privates.collection.remove(doc));
+        return this.get(_id).then((doc) => this._privates.collection.remove(doc));
     }
 };

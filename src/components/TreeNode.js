@@ -206,7 +206,7 @@ export default class TreeNode extends React.Component {
 
     tryExpand() {
         // To expand, must be collapsed and have something (other than _meta) inside
-        if (this.state.collapsed && Object.keys(this.state.childrenModels).length > 1) {
+        if (this.state.collapsed && Object.keys(this.state.childrenModels).length > 0) {
             toggleCollapse(this.state.model._id);
             return true;
         } else {
@@ -307,7 +307,8 @@ export default class TreeNode extends React.Component {
                             _id={model._id}
                             value={model.title}
                             model={model}
-                            nextSequence={nextSequence /* Saves a nasty lookup later*/}
+                            tryCollapse={this.tryCollapse}
+                            tryExpand={this.tryExpand}
                         />
                         <div className="select-container">
                             <select value={model.type} onChange={onTypeChange}>
@@ -325,11 +326,7 @@ export default class TreeNode extends React.Component {
                 <div className={containerClassName}>
                     {!collapsed &&
                         childrenModels &&
-                        childrenModels.map((child, index) => {
-                            // Saves a nasty lookup later
-                            let nextSequence = childrenModels[index + 1]
-                                ? get(childrenModels[index + 1], 'ui.sequence')
-                                : undefined;
+                        childrenModels.map(child => {
                             return (
                                 <TreeNode
                                     key={child._id || child}
@@ -340,7 +337,6 @@ export default class TreeNode extends React.Component {
                                     ref={getChildCollapseFunctions}
                                     useIcons={useIcons}
                                     onClick={onClick}
-                                    nextSequence={nextSequence}
                                 />
                             );
                         })}

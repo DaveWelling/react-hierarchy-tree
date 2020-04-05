@@ -69,6 +69,7 @@ export default class EditableShell extends React.Component {
 
     focus() {
         if (!this.domElementRef) return;
+        console.log(this.domElementRef.innerText);
         this.domElementRef.focus();
     }
 
@@ -148,6 +149,7 @@ export default class EditableShell extends React.Component {
 
     onFocus(){
         this.selection = getSelection(this.domElementRef);
+        console.log(this.domElementRef.innerText);
         this.props.onFocus({
             target: {
                 value: this.props.model,

@@ -4,6 +4,7 @@ const {spyOn, restoreSpies } = expect;
 const {getRepository, purgeDatabase} = require('../../src/database');
 const modelActions = require('../../src/actions/modelActions');
 const eventSink = require('../../src/eventSink');
+const cuid = require('cuid');
 
 describe('modelActions', function(){
     let repo;
@@ -161,7 +162,7 @@ describe('modelActions', function(){
         });
     });
     describe('makeSiblingOfParent', function(){
-        let publishSpy;
+        let publishPromise;
         beforeEach(async function(){
             // Add some children to get
             repo = await getRepository('test');
@@ -170,8 +171,8 @@ describe('modelActions', function(){
             await repo.create({_id: 'b2', hi: 'b2', parentId: 'a0', sequence: 1 });
             const c1 = await repo.create({_id: 'c1', hi: 'c1', parentId: 'b2', sequence: 0 });
             await repo.create({_id: 'b3', hi: 'b3', parentId: 'a0', sequence: 2 });
-            publishSpy = spyOn(eventSink, 'publish');
-
+            // spy on publish and pass publish params to promise resolve
+            publishPromise = new Promise(resolve=>spyOn(eventSink, 'publish').andCall(resolve));
             await modelActions.makeSiblingOfParent(c1, 0, 0, 'test');
         });
         afterEach(async function(){
@@ -187,9 +188,9 @@ describe('modelActions', function(){
             expect(record.sequence).toEqual(1.5);
         });
         it('requests the moved record to be focused', function(){
-            expect(publishSpy).toHaveBeenCalled();
-            let arg = publishSpy.calls[0].arguments[0];
-            expect(arg.type).toEqual('focus_project_model');
+            return publishPromise.then(publishArgs=>{
+                expect(publishArgs.type).toEqual('focus_project_model');
+            });
         });
     });
     describe('makeNextSiblingOfModel', function(){
@@ -225,7 +226,7 @@ describe('modelActions', function(){
         });
     });
     describe('addChild', function(){
-        let publishSpy, newChild, b1;
+        let newChild, b1;
         beforeEach(async function(){
             // Add some children to get
             repo = await getRepository('test');
@@ -233,7 +234,6 @@ describe('modelActions', function(){
             b1 = await repo.create({_id: 'b1',  hi: 'b1', parentId: 'a0', sequence: 0 });
             await repo.create({_id: 'b2', hi: 'b2', parentId: 'a0', sequence: 1 });
             await repo.create({_id: 'b3', hi: 'b3', parentId: 'a0', sequence: 2 });
-            publishSpy = spyOn(eventSink, 'publish');
         });
         afterEach(async function(){
             restoreSpies();
@@ -245,12 +245,6 @@ describe('modelActions', function(){
             expect(lookup).toExist();
             expect(lookup.title).toEqual('test');
         });
-        it('requests the new record to be focused', async function(){
-            newChild = await modelActions.addChild(b1, {title:'test'}, 1, undefined, 'test', 'test');
-            expect(publishSpy).toHaveBeenCalled();
-            let arg = publishSpy.calls[0].arguments[0];
-            expect(arg.type).toEqual('focus_project_model');
-        });
         describe('sequenceAfterPreviousChild is 1 greater than previousChildSequence', function(){
             it('new child has sequence .5 greater than previousChildSequence', async function(){
                 newChild = await modelActions.addChild(b1, {title:'test'}, 1, undefined, 'test', 'test');
@@ -259,11 +253,80 @@ describe('modelActions', function(){
             });
         });
         describe('sequenceAfterPreviousChild is not provided', function(){
-            describe('Next sibling exists', function(){
-                it.only('looks up sequence of next sibling and gives new child sequence = .5 * (next - prev) ', async function(){
-                    newChild = await modelActions.addChild(b1, {title:'test'}, undefined, undefined, 'test', 'test');
-                    let lookup = await repo.get(newChild._id);
-                    expect(lookup.sequence).toEqual(.5);
+            it('sets new child sequence = previousChild.sequence + 1', async function(){
+                newChild = await modelActions.addChild(b1, {title:'test'}, undefined, undefined, 'test', 'test');
+                let lookup = await repo.get(newChild._id);
+                expect(lookup.sequence).toEqual(1);
+            });
+        });
+    });
+    describe('addSibling', function(){
+        describe('sibling is off root', function(){
+            describe('cursor offset is not specified', function(){
+                let publishSpy, b2, dbId = cuid();
+                let newSib, fromDb;
+                before(async function(){
+                    // Add some children to get
+                    repo = await getRepository(dbId);
+                    await repo.create({_id: 'a0',  hi: 'a0', parentId: 'root', sequence: 0 });
+                    await repo.create({_id: 'b1',  title: 'b1XXX', hi: 'b1', parentId: 'a0', sequence: 0 });
+                    b2 = await repo.create({_id: 'b2', title: 'b2YYY', hi: 'b2', parentId: 'a0', sequence: 1 });
+                    await repo.create({_id: 'b2a', title: 'b2aYYY', hi: 'b2a', parentId: 'b2', sequence: 0 });
+                    await repo.create({_id: 'b2b', title: 'b2bYYY', hi: 'b2b', parentId: 'b2', sequence: 1 });
+                    await repo.create({_id: 'b2c', title: 'b2cYYY', hi: 'b2c', parentId: 'b2', sequence: 2 });
+                    await repo.create({_id: 'b3', title: 'b3ZZZ', hi: 'b3', parentId: 'a0', sequence: 2 });
+                    publishSpy = spyOn(eventSink, 'publish');
+                    newSib = await modelActions.addSibling(b2, undefined, dbId);
+                    fromDb = await repo.get(newSib._id);
+                });
+                after(()=>{
+                    return purgeDatabase(dbId);
+                });
+                it('creates new sibling', async function(){
+                    expect(fromDb).toExist();
+                });
+                it('new sibling has root for parent', function(){
+                    expect(fromDb.parentId).toEqual('a0');
+                });
+                it('sequenced after creating sibling', function(){
+                    expect(fromDb.sequence).toEqual(1.5);
+                });
+                it('focuses on new sibling', function(){
+                    expect(publishSpy).toHaveBeenCalled();
+                    const args = publishSpy.calls[0].arguments[0];
+                    expect(args.focus._id).toEqual(fromDb._id);
+                });
+            });
+            describe('cursor offset is inside creating sibling\'s text', function(){
+                let publishSpy, b2, dbId = cuid();
+                let newSib, fromDb;
+                before(async function(){
+                    // Add some children to get
+                    repo = await getRepository(dbId);
+                    await repo.create({_id: 'a0',  hi: 'a0', parentId: 'root', sequence: 0 });
+                    await repo.create({_id: 'b1',  title: 'b1XXX', hi: 'b1', parentId: 'a0', sequence: 0 });
+                    b2 = await repo.create({_id: 'b2', title: 'b2YYY', hi: 'b2', parentId: 'a0', sequence: 1 });
+                    await repo.create({_id: 'b2a', title: 'b2aYYY', hi: 'b2a', parentId: 'b2', sequence: 0 });
+                    await repo.create({_id: 'b2b', title: 'b2bYYY', hi: 'b2b', parentId: 'b2', sequence: 1 });
+                    await repo.create({_id: 'b2c', title: 'b2cYYY', hi: 'b2c', parentId: 'b2', sequence: 2 });
+                    await repo.create({_id: 'b3', title: 'b3ZZZ', hi: 'b3', parentId: 'a0', sequence: 2 });
+                    publishSpy = spyOn(eventSink, 'publish');
+                    newSib = await modelActions.addSibling(b2, 2, dbId);
+                    fromDb = await repo.get(newSib._id);
+                });
+                after(()=>{
+                    return purgeDatabase(dbId);
+                });
+                it('brings text after cursor to new sibling', function(){
+                    expect(fromDb.title).toEqual('YYY');
+                });
+                it('places cursor at beginning of text brought from previous sibling', function(){
+                    const args = publishSpy.calls[0].arguments[0];
+                    expect(args.focus.selectionStart).toEqual(0);
+                });
+                it('changes the creating siblings text to be title before cursor', async function(){
+                    const updatedModel = await repo.get('b2');
+                    expect(updatedModel.title).toEqual('b2');
                 });
             });
         });
@@ -282,7 +345,7 @@ describe('modelActions', function(){
         });
         describe('sequenceAfterPreviousChild is not provided', function(){
             describe('Next sibling DOES NOT exist', function(){
-                it.only('gives new child previous child\'s sequence + 1', async function(){
+                it('gives new child previous child\'s sequence + 1', async function(){
                     newChild = await modelActions.addChild(b1, {title:'test'}, undefined, undefined, 'test', 'test');
                     let lookup = await repo.get(newChild._id);
                     expect(lookup.sequence).toEqual(1);
@@ -404,9 +467,13 @@ describe('modelActions', function(){
             await repo.create({_id: 'a0',  hi: 'a0', parentId: 'root', sequence: 0 });
             await repo.create({_id: 'b1',  title: 'b1', parentId: 'a0', sequence: 0 });
             await repo.create({_id: 'b2', title: 'b2', parentId: 'a0', sequence: 1});
-            await repo.create({_id: 'b3', hi: 'b3', parentId: 'a0', sequence: 2 });
             await repo.create({_id: 'c1', hi: 'c1', parentId: 'b2', sequence: 0 });
-            await repo.create({_id: 'c2', hi: 'c2', parentId: 'b2', sequence: 0 });
+            await repo.create({_id: 'c2', hi: 'c2', parentId: 'b2', sequence: 1 });
+            await repo.create({_id: 'b3', hi: 'b3', parentId: 'a0', sequence: 2 });
+            await repo.create({_id: 'c3', hi: 'c3', parentId: 'b3', sequence: 0 });
+            await repo.create({_id: 'c4', hi: 'c4', parentId: 'b3', sequence: 1 });
+            await repo.create({_id: 'd1', hi: 'd1', parentId: 'c4', sequence: 0 });
+            await repo.create({_id: 'b4', hi: 'b4', parentId: 'a0', sequence: 3 });
             if (update) {
                 await repo.update(update);
             }
@@ -445,6 +512,20 @@ describe('modelActions', function(){
                 let arg = publishSpy.calls[0].arguments[0];
                 expect(arg.type).toEqual('focus_project_model');
                 expect(arg.focus._id).toEqual('b3');
+            });
+        });
+        describe('can move up two levels if no intervening children', function(){
+            describe('all expanded focus on d1', function(){
+                it('requests b4 be focused', async function(){
+                    await setupRepo('d1');
+                    await repo.update({ _id: 'b3', 'ui': {collapsed: false}});
+                    await repo.update({ _id: 'c4', 'ui': {collapsed: false}});
+                    await modelActions.moveToNext(target, 'test');
+                    expect(publishSpy).toHaveBeenCalled();
+                    let arg = publishSpy.calls[0].arguments[0];
+                    expect(arg.type).toEqual('focus_project_model');
+                    expect(arg.focus._id).toEqual('b4');
+                });
             });
         });
     });

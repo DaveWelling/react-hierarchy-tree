@@ -8,6 +8,7 @@ const {get, set} = require('lodash');
 
 module.exports = {
     addChild,
+    addSibling,
     ensureExpandedProjectModel,
     findBottomVisibleChild,
     focus,
@@ -190,6 +191,30 @@ async function makeNextSiblingOfModel(targetId, siblingModel, collectionName = d
     });
 }
 
+async function addSibling(model, cursorOffset, collectionName = defaultCollectionName) {
+    const {title, _id} = model;
+    let newSiblingTitle = '';
+    if (cursorOffset < model.title.length) {
+        const newTitle = title.substr(0, cursorOffset);
+        newSiblingTitle = title.substr(cursorOffset).trim();
+        await valueChange(model._id, 'title', newTitle, collectionName);
+    }
+    const nextExistingSibling =  await getNextSibling(_id, collectionName);
+    const newSibling = await addChild(model, {title: newSiblingTitle}, nextExistingSibling && nextExistingSibling.sequence, undefined, collectionName);
+    // Must render before you can focus on it.
+    setImmediate(()=>{
+        eventSink.publish({
+            type: 'focus_project_model',
+            focus: {
+                _id: newSibling._id,
+                model: newSibling,
+                selectionStart: 0
+            }
+        });
+    });
+    return newSibling;
+}
+
 async function addChild(
     previousChild,
     newChildValues,
@@ -197,17 +222,11 @@ async function addChild(
     type = config.defaultModelType,
     collectionName = defaultCollectionName
 ) {
-
-    if (typeof sequenceAfterPreviousChild === 'undefined') {
-        const nextSibling = await getNextSibling(previousChild._id, collectionName);
-        if (nextSibling) {
-            sequenceAfterPreviousChild = nextSibling.sequence;
-        }
-    }
     // increment sequence by half of the last digit of the previous child's sequence
+    const previousChildSequence = (previousChild.sequence || 0);
     const newSequence = sequenceAfterPreviousChild
-        ? previousChild.sequence + (sequenceAfterPreviousChild - previousChild.sequence) / 2
-        : previousChild.sequence + 1;
+        ? previousChildSequence+ (sequenceAfterPreviousChild - previousChildSequence) / 2
+        : previousChildSequence + 1;
     const newId = cuid();
     const newModel = {
         _id: newId,
@@ -217,15 +236,7 @@ async function addChild(
         ...newChildValues
     };
     let repo = await getRepository(collectionName);
-    await repo.create(newModel);
-    eventSink.publish({
-        type: 'focus_project_model',
-        focus: {
-            _id: newId,
-            model: newModel
-        }
-    });
-    return newModel;
+    return repo.create(newModel);
 }
 
 async function mergeWithPreviousSibling(model, collectionName = defaultCollectionName) {
@@ -285,7 +296,6 @@ async function moveFocusToPrevious(model, collectionName) {
     focusModel = focusModel || (previousSibling ? previousSibling : await getModel(model.parentId, collectionName));
     // If nothing is found, then must be at the root.
     if (!focusModel) return; // No where else to go.
-
     eventSink.publish({
         type: 'focus_project_model',
         focus: {
@@ -297,7 +307,9 @@ async function moveFocusToPrevious(model, collectionName) {
 
 async function findBottomVisibleChild(parent, collectionName = defaultCollectionName) {
     if (parent && !get(parent, 'ui.collapsed', true)) {
-        const children = await getChildren(parent._id, collectionName);
+        const results = await getChildren(parent._id, collectionName);
+        let children = [...results];
+        children = children.sort((a, b) => a.sequence - b.sequence);
         if (children && children.length) {
             const bottom = children[children.length - 1];
             return await findBottomVisibleChild(bottom, collectionName);
@@ -329,7 +341,14 @@ async function moveToNext(model, collectionName = defaultCollectionName) {
         else if (!model.parentId) return;
         else {
             // Try to move to parent's next sibling
-            nextSibling = await getNextSibling(model.parentId, collectionName);
+            let parentId = model.parentId;
+            while (parentId !== 'root' && !nextSibling) {
+                nextSibling = await getNextSibling(parentId, collectionName);
+                if (!nextSibling) {
+                    let parent = await getModel(parentId, collectionName);
+                    parentId = parent.parentId;
+                }
+            }
             if (!nextSibling) return; //Nowhere else to go;
             focusId = nextSibling._id;
             focusModel = nextSibling;
