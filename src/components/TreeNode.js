@@ -194,6 +194,8 @@ export default class TreeNode extends React.Component {
         this.toggleCollapse();
     }
 
+    // complains about passive listener and being disabled.
+    // See here: https://github.com/facebook/react/issues/14856
     // React Synth event: https://developer.mozilla.org/en-US/docs/Web/Events/wheel
     handleWheel(e) {
         e.preventDefault();
