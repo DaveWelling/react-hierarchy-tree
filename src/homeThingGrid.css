@@ -1,0 +1,18 @@
+.thingGrid {
+    background-color: #48464070;
+    /* margin-top: -100vh; */
+    display: grid;
+    width: 95vw;
+    height: 100vh;
+    grid-gap: .5vh;
+    grid-template-columns: repeat(auto-fill, minmax(4vw, 4vw));
+    grid-template-rows: repeat(auto-fill, minmax(4vh,4vh));
+}
+.thing {
+    background-color: #d6c8a610;
+    border-radius: 2vw;
+}
+
+.thing:hover {
+    background-color: blue;
+}
