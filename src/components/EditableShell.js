@@ -69,7 +69,6 @@ export default class EditableShell extends React.Component {
 
     focus() {
         if (!this.domElementRef) return;
-        console.log(this.domElementRef.innerText);
         this.domElementRef.focus();
     }
 

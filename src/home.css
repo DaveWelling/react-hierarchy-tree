@@ -4,10 +4,13 @@ html {
 body {
     font-family: 'Fira Sans', sans-serif;
     background-color: black;
+    margin: 0;
+    overflow-x: hidden;
 }
 .top {
     display: flex;
     justify-content: space-between;
+    align-items: center;
 }
 .top-background {
     margin-top: -100vh;
@@ -24,8 +27,8 @@ body {
     border-radius: 2em;
 }
 .get-started-top a {
-    color: #d6c8a6a6;
-    font-size: 15pt;
+    color: #d6c8a6;
+    font-size: 2vh;
     display: block;
     padding: 1em;
     text-decoration: none;
@@ -98,20 +101,19 @@ body {
 }
 
 .links {
-    font-size: 50pt;
+    font-size: 7vh;
     background-color: #d6c8a6a6;
     padding: .25em;
     border-radius: .1em;
     width: fit-content;
-    margin: 1em;
+    margin: 1vh 3vh 1vh 1vh;
     height: fit-content;
-    align-self: flex-end;
     border-radius: .3em;
     font-family: 'Source Serif Pro', serif;
 }
 
 .bottom-links {
-    font-size: 15pt;
+    font-size: 1.75vh;
     background-color: #d6c8a6cf;
     padding: .25em;
     border-radius: .1em;
@@ -127,18 +129,19 @@ body {
 }
 
 .bottom-links .link {
-    font-size: 10pt;
+    font-size: 1.75vh;
     text-decoration: underline;
     align-self: flex-end;
-    line-height: 15pt;
+    line-height: 2vh;
 }
 
 .what-is-this {
-    margin: 1em 0 1em;
+    margin: 1em 0 0;
     padding: .5em;
     background-color: #3a3a3a;
     color: white;
     height: 100vh;
+    font-size: 1.75vh;
 }
 
 .what-is-this h1 {

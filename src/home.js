@@ -1,15 +1,19 @@
 (function createThings(){
+    const columns = 23;
+    const start = 0;
     const thingGrid = document.querySelector('#thingGrid');
     let count = 0;
-    for (let i = 0; i < 25; i++) {
-        for (let j = 0; j < 4; j++) {
+
+    for (let i = start; i < columns; i++) {
+        for (let j = start; j < 4; j++) {
             const thing = document.createElement('div');
-            const row = (i % 25);
-            const column = (i+(Math.floor(Math.random() * j * 100))) %25;
+            const row = (i % columns);
+            const column = (i+(Math.floor(Math.random() * j * 100))) %columns;
             const id = 'thing' + count;
             thing.id = id;
             thing.classList.add('thing');
-
+            const icon = window.iconNames[Math.floor(Math.random() * window.iconNames.length)];
+            thing.innerHTML = `<i class="material-icons">${icon}<i>`;
             thing.style['grid-row-start'] = row;
             thing.style['grid-row-end'] = row;
             thing.style['grid-column-start'] = column;
@@ -23,14 +27,15 @@
         const color = ['yellow', 'blue', 'red'][picker % 3];
         const id = '#thing' + picker;
         const thing = document.querySelector(id);
+        if (!thing) return;
         const x = window.innerWidth / 2;
         const y = window.innerHeight / 2;
-        const newY = y - thing.offsetTop;
-        const newX = x - thing.offsetLeft;
+        const newY = y - (thing.offsetTop || 0);
+        const newX = x - (thing.offsetLeft || 0);
         thing.style['background-color'] = color;
         thing.animate([
-            { height: '4vh', width: '4vw', opacity: 1, transform: 'translate(0px, 0px) rotate(0deg)'},
-            { height: '1vw', width: '1vh', opacity: 0, transform: `translate(${newX}px, ${newY}px) rotate(360deg)`}
+            { height: '4vh', width: '4vw', opacity: 1, transform: 'translate(0px, 0px) rotate(0deg) scale(1)'},
+            { height: '4vw', width: '4vh', opacity: 0, transform: `translate(${newX}px, ${newY}px) rotate(360deg) scale(.25)`}
         ], {
             duration: 4000,
             iterations: 1,
