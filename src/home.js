@@ -23,7 +23,7 @@
         }
     }
     setInterval(() => {
-        const picker = Math.floor(Math.random() * 100);
+        const picker = Math.floor(Math.random() * count);
         const color = ['yellow', 'blue', 'red'][picker % 3];
         const id = '#thing' + picker;
         const thing = document.querySelector(id);
