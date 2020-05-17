@@ -1,39 +1,54 @@
-<!DOCTYPE html>
 <html>
     <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#137b85" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <meta http-equiv="x-ua-compatible" content="ie=edge" />
-        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-        <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet" />
-        <title>Curator</title>
-        <meta name="description" content="Create an outline and edit content for the outline nodes." />
-        <script type="text/javascript">
-            function handleClientLoad() {
-                window.googleApiLoadedForProject = true;
-            }
-        </script>
-        <script type="text/javascript" src="https://apis.google.com/js/api.js?onload=handleClientLoad"></script>
+        <link href="https://fonts.googleapis.com/css?family=Fira+Sans|Source+Serif+Pro&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link rel="stylesheet" href="./home.css" />
+        <link rel="stylesheet" href="./homeThingGrid.css" />
+        <link rel="shortcut icon" href="favicon.png">
     </head>
 
-    <body style="background-color: #137b85">
-        <div id="app"></div>
-        <script>
-            if (!['localhost','novel.davewelling.com',].includes(location.hostname)) {
-                // Check that service workers are supported
-                if ('serviceWorker' in navigator) {
-                    // Use the window load event to keep the page load performant
-                    window.addEventListener('load', () => {
-                        navigator.serviceWorker.register('/service-worker.js');
-                    });
-                }
-                // window.addEventListener('beforeinstallprompt', e => {
-                //     e.prompt();
-                // });
-            }
-        </script>
+    <body>
+        <div id="thingGrid" class="thingGrid">
+        </div>
+        <div class="get-started-top">
+            <a  href='./app.html'>Get Started</a>
+            <a  href='#what-is-this'>What is this?</a>
+        </div>
+        <div class="appName">
+            <a class="appLink" href="./app.html">Curator</a>
+        </div>
+        <div class="logo">
+            <div class="logo-background"></div>
+            <div class="logo-content">
+                C
+                <div class="ball red-ball"></div>
+                <div class="ball yellow-ball"></div>
+                <div class="ball blue-ball"></div>
+            </div>
+        </div>
+        <div class="bottom-links">
+            <div>A repository for curious things</div>
+            <a class="link" href="./privacyPolicy.html">Privacy Policy</a>
+        </div>
+        <div id="what-is-this" class="what-is-this">
+            <h1>What is this?</h1>
+            <p>
+                Curator provides a spot where you can create and organize thoughts in the form of writing and simple sketches.
+            </p>
+            <p>
+                Curator runs and stores data in your browser.  Your thoughts never leave the browser unless you decide to store them in your Google Drive or download them to your local machine.  You can work offline, and if you close your browser, you should be able to return and pick up where you left off.
+            </p>
+            <p>
+                That being said, the browser can forget your work if (for instance) you clear the browser data.  For this reason, it is probably a good idea to save your efforts (just as you would save them in a desktop word processor).
+            </p>
+            <h1>Is it free?</h1>
+            <p>Yes.</p>
+            <p>Because your data is on your own device or on Google Drive, the hosting cost for this application is insignificant.  Enjoy. &#x263a</p>
+            <div class="get-started-bottom">
+                <a href="./app.html">Get Started</a>
+            </div>
+        </div>
+        <script src="./icons.js"></script>
+        <script src="./home.js"></script>
     </body>
 </html>

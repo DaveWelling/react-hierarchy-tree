@@ -10,7 +10,7 @@ module.exports = {
     devtool: 'source-map',
     mode: process.env.NODE_ENV,
     entry: {
-        main: ['./src/index']
+        main: ['./src/app']
     },
     output: {
         filename: '[name].[hash].js',
@@ -22,7 +22,7 @@ module.exports = {
     devServer: {
         contentBase: './src',
         historyApiFallback: {
-            index: '/index.html'
+            app: '/app.html'
         },
         port: 80,
         host: '0.0.0.0',
@@ -82,16 +82,24 @@ module.exports = {
                 to: 'privacyPolicy.html'
             },
             {
-                from: './src/home.html',
-                to: 'home.html'
+                from: './src/index.html',
+                to: 'index.html'
             },
             {
                 from: './src/home.css',
                 to: 'home.css'
             },
             {
-                from: './src/Background.jpg',
-                to: 'Background.jpg'
+                from: './src/icons.js',
+                to: 'icons.js'
+            },
+            {
+                from: './src/home.js',
+                to: 'home.js'
+            },
+            {
+                from: './src/homeThingGrid.css',
+                to: 'homeThingGrid.css'
             }
         ]),
         // Make browser version avoid using Node specific stuff
@@ -106,8 +114,8 @@ module.exports = {
             __VERSION__: "'v"+ packageInfo.version.toString() + "'"
         }),
         new HtmlWebPackPlugin({
-            template: 'src/index.html',
-            filename: './index.html',
+            template: 'src/app.html',
+            filename: './app.html',
             favicon: 'src/favicon.png',
             chunks: ['main']
         }),
@@ -163,7 +171,7 @@ module.exports = {
             name: 'Curator',
             short_name: 'Curator',
             description: 'Hierarchical Editor',
-            start_url: '/index.html',
+            start_url: '/app.html',
             background_color: '#137b85',
             theme_color: '#137b85',
             orientation: 'any',

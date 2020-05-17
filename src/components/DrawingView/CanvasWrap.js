@@ -1,6 +1,7 @@
 import paper from 'paper/dist/paper-core';
 import React, {useRef, useEffect, useState} from 'react';
 import {debounce} from 'lodash';
+import {subscribe} from '../../eventSink';
 
 // TODO: consider https://www.npmjs.com/package/pinch-zoom-canvas
 // TODO: hook up undo/redo
@@ -85,7 +86,7 @@ export default function CanvasWrap({id, version, drawing, passThrough, onChange,
                     hit.item.remove();
                     change();
                 }
-            };
+            }
             if (path.current) path.current.add(e.point);
         }
     }
@@ -100,6 +101,23 @@ export default function CanvasWrap({id, version, drawing, passThrough, onChange,
         // which is nice for reducing storage.
         path.current.simplify(1.5);
         change();
+    }
+
+
+    function onResize(e) {
+
+    }
+
+    function onSplitResize(action) {
+        const {sizes: [, rightPct], leftSize, rightSize} = action;
+        const newWidth = (leftSize+rightSize) * (rightPct/100);
+        paper.view.viewSize = new paper.Size(newWidth, paper.view.size.height);
+    }
+    function onSplitResizeEnd(action) {
+        const {rightSize} = action;
+        if (paper.view.viewSize.width < rightSize) {
+            paper.view.viewSize = new paper.Size(rightSize, paper.view.viewSize.height);
+        }
     }
 
     /**
@@ -124,11 +142,17 @@ export default function CanvasWrap({id, version, drawing, passThrough, onChange,
         mouseEvents.onMouseDrag = onMouseDrag;
         mouseEvents.onMouseUp = onMouseUp;
         canvas.addEventListener('mousewheel', mouseWheel);
+        paper.view.onResize = onResize;
+        const unsubscribes = [];
+        unsubscribes.push(subscribe('drag_split', onSplitResize));
+        unsubscribes.push(subscribe('drag_split_end', onSplitResizeEnd));
         isPaperSetup.current = true;
         // Cleanup
         return ()=>{
+            unsubscribes.forEach(unsubscribe=>unsubscribe());
             isPaperSetup.current = false;
             canvas.removeEventListener('mousewheel', mouseWheel);
+            canvas.removeEventListener('resize', onResize);
             mouseEvents.onMouseDown = undefined;
             mouseEvents.onMouseDrag = undefined;
             mouseEvents.onMouseUp = undefined;
@@ -152,5 +176,5 @@ export default function CanvasWrap({id, version, drawing, passThrough, onChange,
     }, [backgroundImage]);
 
 
-    return <canvas id="canvas" resize="true" ref={canvasRef}/>;
+    return <canvas id="canvas" ref={canvasRef}/>;
 }
