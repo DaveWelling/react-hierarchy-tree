@@ -19,7 +19,7 @@
     "cuid": "^2.1.6",
     "emotion": "^10.0.17",
     "escape-html": "^1.0.3",
-    "googleapis": "^32.0.0",
+    "googleapis": "^39.1.0",
     "immutable": "^4.0.0-rc.12",
     "interactjs": "^1.6.2",
     "is-hotkey": "^0.1.6",
