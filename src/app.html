@@ -22,18 +22,20 @@
     <body style="background-color: #137b85">
         <div id="app"></div>
         <script>
-            if (!['localhost','novel.davewelling.com',].includes(location.hostname)) {
+            //if (!['localhost','novel.davewelling.com',].includes(location.hostname)) {
                 // Check that service workers are supported
                 if ('serviceWorker' in navigator) {
                     // Use the window load event to keep the page load performant
                     window.addEventListener('load', () => {
-                        navigator.serviceWorker.register('/service-worker.js');
+                        navigator.serviceWorker.register('/sw.js').catch(err=>{
+                            console.error(err.stack || err.message || err);
+                        });
                     });
                 }
                 // window.addEventListener('beforeinstallprompt', e => {
                 //     e.prompt();
                 // });
-            }
+            //}
         </script>
     </body>
 </html>

@@ -1,3 +1,4 @@
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const HtmlWebPackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const webpack = require('webpack');
@@ -10,7 +11,8 @@ module.exports = {
     devtool: 'source-map',
     mode: process.env.NODE_ENV,
     entry: {
-        main: ['./src/app']
+        main: ['./src/app'],
+        //sw: ['./src/sw.js']
     },
     output: {
         filename: '[name].[hash].js',
@@ -123,49 +125,9 @@ module.exports = {
             filename: '[name].[hash].css',
             chunkFilename: '[id].css'
         }),
-        new WorkboxPlugin.GenerateSW({
-            // Do not precache images
-            exclude: [/\.(?:png|jpg|jpeg|svg)$/],
-            // Define runtime caching rules.
-            runtimeCaching: [
-                {
-                    // Match any request that ends with .png, .jpg, .jpeg or .svg.
-                    urlPattern: /\.(?:png|jpg|jpeg|svg)$/,
-
-                    // Apply a cache-first strategy.
-                    handler: 'CacheFirst',
-
-                    options: {
-                        // Use a custom cache name.
-                        cacheName: 'curatorimages',
-
-                        // Only cache 10 images.
-                        expiration: {
-                            maxEntries: 10
-                        }
-                    }
-                },
-                {
-                    urlPattern: /fonts\.gstatic\.com\/(.*)/,
-                    handler: 'CacheFirst',
-                    options: {
-                        cacheName: 'google-font-file-cache',
-                        expiration: {
-                            maxEntries: 10
-                        }
-                    }
-                },
-                {
-                    urlPattern: /fonts\.googleapis\.com\/(.*)/,
-                    handler: 'CacheFirst',
-                    options: {
-                        cacheName: 'google-font-style-cache',
-                        expiration: {
-                            maxEntries: 10
-                        }
-                    }
-                }
-            ]
+        new WorkboxPlugin.InjectManifest({
+            swSrc: path.join(__dirname, 'src/sw.js'),
+            swDest: 'sw.js'
         }),
         new WebpackPwaManifest({
             name: 'Curator',
@@ -180,7 +142,23 @@ module.exports = {
                 src: path.resolve('src/apple-touch-icon.png'),
                 sizes: [96, 128, 192, 256, 384, 512] // multiple sizes
               }
-            ]
-          })
+            ],
+            'share_target': {
+                'action': '/share',
+                'method': 'POST',
+                'enctype': 'multipart/form-data',
+                'params': {
+                  'title': 'name',
+                  'text': 'description',
+                  'files': [
+                    {
+                      'name': 'photos',
+                      'accept': ['image/jpeg', '.jpg']
+                    }
+                  ]
+                }
+              }
+          }),
+          //new BundleAnalyzerPlugin()
     ]
 };
